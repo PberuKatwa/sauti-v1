@@ -13,7 +13,7 @@ import { OrdersModel } from "../modules/orders/orders.model";
 
 @Global()
 @Module({
-  imports: [AppLoggerModule, UsersModule, FilesModule, ClientModule],
+  imports: [AppLoggerModule, UsersModule, FilesModule, ClientModule, OrdersModule],
   providers:[PostgresConfig,PostgresGlobals, FilesModel, ClientModel],
   exports:[PostgresConfig]
 })
