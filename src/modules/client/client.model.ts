@@ -165,7 +165,6 @@ export class ClientModel {
       }
 
       const client: ClientProfile = result.rows[0];
-
       return client;
 
     } catch (error) {
