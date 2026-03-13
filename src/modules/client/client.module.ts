@@ -5,7 +5,7 @@ import { ClientsController } from "./client.controller";
 
 @Module({
   controllers:[ClientsController],
-  imports:[PostgresModule],
-  providers:[ClientModel]
+  providers: [ClientModel],
+  exports:[ClientModel]
 })
 export class ClientModule { };
