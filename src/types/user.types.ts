@@ -1,3 +1,5 @@
+import type { ApiResponse } from "./api.types";
+
 export interface UserProfile {
   id: number;
   first_name: string;
@@ -23,24 +25,18 @@ export interface UpdateUserPayload {
   whatsappPermanentToken: string;
 }
 
-/** Incoming  webhook message user type */
-export interface WebhookUser {
-  from: string; // phone number of sender
-  id: string; // message id
-  timestamp: string;
-  type: "text" | "interactive" | "image" | "document" | "audio" | "video";
-  text?: {
-    body: string;
-  };
-  interactive?: {
-    button_reply?: {
-      id: string;
-      title: string;
-    };
-    list_reply?: {
-      id: string;
-      title: string;
-      description?: string;
+export interface SingleUserApiResponse extends ApiResponse {
+  data: UserProfile;
+}
+
+export interface AllUsersApiResponse extends ApiResponse {
+  data: {
+    users: UserProfile[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
     };
   };
 }
