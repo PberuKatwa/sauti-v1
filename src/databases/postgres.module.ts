@@ -2,10 +2,10 @@ import { Global, Module, OnModuleInit } from "@nestjs/common";
 import { AppLoggerModule } from "../logger/logger.module";
 import { PostgresConfig } from "./postgres.config";
 import { PostgresGlobals } from "./postgres.globals";
-import { UsersModule } from "src/modules/users/users.module";
-import { UsersModel } from "src/modules/users/users.model";
-import { FilesModel } from "src/modules/files/files.model";
-import { FilesModule } from "src/modules/files/files.module";
+import { UsersModule } from "../modules/users/users.module";
+import { UsersModel } from "../modules/users/users.model";
+import { FilesModel } from "../modules/files/files.model";
+import { FilesModule } from "../modules/files/files.module";
 
 @Global()
 @Module({

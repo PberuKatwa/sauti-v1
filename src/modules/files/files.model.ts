@@ -69,24 +69,6 @@ export class FilesModel {
     }
   }
 
-  async fetchFilesByUserId(userId: number): Promise<File[]> {
-    try {
-      const query = `
-        SELECT id, user_id, file_name , file_url , file_size, mime_type
-        FROM files
-        WHERE user_id = $1 AND status = 'active'
-        ORDER BY created_at DESC;
-      `;
-
-      const pgPool = this.pgConfig.getPool();
-      const result = await pgPool.query(query, [userId]);
-      return result.rows;
-    } catch (error) {
-      this.logger.error(`Error fetching files for user ${userId}: ${error.message}`);
-      throw error;
-    }
-  }
-
   async getFile(id: number):Promise<File> {
     try {
 
@@ -106,7 +88,6 @@ export class FilesModel {
 
   async deleteFile(id: number): Promise<boolean> {
     try {
-      // Soft delete approach to match your 'row_status' pattern
       const query = `UPDATE files SET status = 'trash' WHERE id = $1`;
       const pgPool = this.pgConfig.getPool();
       await pgPool.query(query, [id]);
