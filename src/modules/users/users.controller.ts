@@ -7,7 +7,7 @@ import type { SingleUserApiResponse, AllUsersApiResponse } from "../../types/use
 import { UsersModel } from "./users.model";
 import type { UserProfile, CreateUserPayload, UpdateUserPayload } from "../../types/user.types";
 
-@Controller('whatsapp/users')
+@Controller('users')
 export class UsersController {
 
   constructor(
