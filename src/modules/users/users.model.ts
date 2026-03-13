@@ -11,7 +11,7 @@ import type {
 } from "../../types/user.types";
 
 @Injectable()
-export class WhatsappUsersModel {
+export class UsersModel {
   private readonly pool: Pool | null;
 
   constructor(
