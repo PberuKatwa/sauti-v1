@@ -87,9 +87,13 @@ export class OrdersModel {
       const tax = Math.floor((0.15)/subtotal);
       const total = subtotal + tax;
 
+      const precision = 10000
+      const randomNum = Math.floor(Math.random() * precision) / precision;
+      const invoiceNumber = `INV-${randomNum}`;
+
       const query = `
-        INSERT INTO orders (client_id, items, subtotal, tax, total)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO orders (client_id, items, subtotal, tax, total, invoice_number)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING
           id,
           client_id,
@@ -108,7 +112,8 @@ export class OrdersModel {
         JSON.stringify(items),
         subtotal,
         tax,
-        total
+        total,
+        invoiceNumber
       ]);
 
       const order: OrderProfile = result.rows[0];
