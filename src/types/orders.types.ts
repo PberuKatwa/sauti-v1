@@ -31,10 +31,6 @@ export interface MarkOrderPaidPayload {
   orderId: number;
 }
 
-/* ================================
-   API Responses
-================================ */
-
 export interface SingleOrderApiResponse extends ApiResponse {
   data: OrderProfile;
 }
