@@ -67,7 +67,7 @@ export class UsersModel {
       this.logger.warn(`Attempting to create WhatsApp user: ${firstName} ${lastName}`);
 
       const query = `
-        INSERT INTO whatsapp_users (
+        INSERT INTO users (
           first_name, last_name, phone_number, phone_number_id, business_account_id, whatsapp_access_token
         )
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -99,7 +99,7 @@ export class UsersModel {
        this.logger.warn(`Attempting to update user id: ${id}`);
 
        const query = `
-         UPDATE whatsapp_users
+         UPDATE users
          SET whatsapp_access_token=$1, whatsapp_permanent_token=$2
          WHERE id=$3
        `;
@@ -126,7 +126,7 @@ export class UsersModel {
            phone_number_id,
            business_account_id,
            status
-         FROM whatsapp_users
+         FROM users
          WHERE id=$1 AND status != 'trash'
        `;
 
@@ -153,7 +153,7 @@ export class UsersModel {
            phone_number_id,
            business_account_id,
            status
-         FROM whatsapp_users
+         FROM users
          WHERE phone_number=$1 AND status != 'trash'
        `;
 
