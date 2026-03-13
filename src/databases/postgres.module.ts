@@ -8,6 +8,8 @@ import { FilesModel } from "../modules/files/files.model";
 import { FilesModule } from "../modules/files/files.module";
 import { ClientModule } from "../modules/client/client.module";
 import { ClientModel } from "../modules/client/client.model";
+import { OrdersModule } from "../modules/orders/orders.module";
+import { OrdersModel } from "../modules/orders/orders.model";
 
 @Global()
 @Module({
@@ -22,7 +24,8 @@ export class PostgresModule implements OnModuleInit {
     private readonly postgresConfig: PostgresConfig,
     private readonly users: UsersModel,
     private readonly files: FilesModel,
-    private readonly clients:ClientModel,
+    private readonly clients: ClientModel,
+    private readonly orders:OrdersModel,
     private readonly pgGlobals:PostgresGlobals
   ) { };
 
@@ -34,6 +37,7 @@ export class PostgresModule implements OnModuleInit {
     await this.users.createTable()
     await this.files.createTable()
     await this.clients.createTable()
+    await this.orders.createTable()
   }
 
 }
