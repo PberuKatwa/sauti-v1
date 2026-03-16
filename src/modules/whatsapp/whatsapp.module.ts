@@ -2,22 +2,23 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WhatsappService } from "./whatsapp.service";
 import { WhatsappController } from "./whatsapp.controller";
+import { AppLogger } from "../../logger/winston.logger";
+import { APP_LOGGER } from "../../logger/logger.provider";
 
 @Module({
   controllers:[WhatsappController],
   providers: [
-      WhatsappService,
-      {
-        provide: 'WHATSAPP_TOKEN',
-        useFactory: (config: ConfigService) => config.get<string>('whatsappAccessToken'),
-        inject: [ConfigService],
+    {
+      provide: WhatsappService,
+      useFactory: function (logger: AppLogger, config: ConfigService) {
+        const token = config.get<string>('whatsappAccessToken');
+        const phoneNumberId = config.get<string>('phoneNumberId');
+
+        return new WhatsappService(logger, token, phoneNumberId);
       },
-      {
-        provide: 'WHATSAPP_PHONE_ID',
-        useFactory: (config: ConfigService) => config.get<string>('phoneNumberId'),
-        inject: [ConfigService],
-      },
-    ],
+      inject:[APP_LOGGER,ConfigService]
+    }
+  ],
   exports:[WhatsappService]
 })
 export class WhatsappModule { };
