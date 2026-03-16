@@ -3,13 +3,16 @@ import type { Request, Response } from "express";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
 import { WhatsappService } from "./whatsapp.service";
+import { ConfigService } from "@nestjs/config";
+import { ApiResponse } from "../../types/api.types";
 
 @Controller('whatsapp')
 export class WhatsappController{
 
   constructor(
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
-    private readonly whatsappService:WhatsappService
+    private readonly whatsappService: WhatsappService,
+    private readonly configService: ConfigService
   ) { };
 
 
@@ -23,25 +26,24 @@ export class WhatsappController{
       const challenge = req.query['hub.challenge']
       const verifyToken = req.query['hub.verify_token']
 
-      if( mode && verifyToken === config.META_VERIFY_TOKEN ){
-          return res.status(200).send(challenge)
+      if( mode && verifyToken === this.configService.get<string>('metaVerifyToken') ){
+        return res.status(200).send(challenge)
       } else {
-          return res.sendStatus(403)
+        return res.sendStatus(403)
       }
 
     } catch (error:any) {
-        logger.error('Error in veryfying webhook from meta whatsapp',{
-          errorMessage:error.message,
-          errorStack:error.stack
-        })
+      this.logger.error('Error in veryfying webhook from meta whatsapp',{
+        errorMessage:error.message,
+        errorStack:error.stack
+      })
 
-        const response:ApiResponse = {
-            success:false,
-            message:error.message
-        }
+      const response:ApiResponse = {
+        success:false,
+        message:error.message
+      }
 
-        res.status(500).json(response)
-
+      res.status(500).json(response)
     }
   }
 
