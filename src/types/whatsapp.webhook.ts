@@ -1,40 +1,35 @@
 export interface WhatsappWebhook{
-
-    object:"whatsapp_business_account";
-    entry:Array<WebhookEntry>;
-
+  object:"whatsapp_business_account";
+  entry:Array<WebhookEntry>;
 }
 
 export interface WebhookEntry{
-    id:string;
-    changes:Array<WebhookChanges>
+  id:string;
+  changes:Array<WebhookChanges>
 }
 
 export interface WebhookChanges{
-
-    field:string;
-    value?:{
-        messaging_product:"whatsapp";
-        statuses?:Array<StatusesValue>;
-        contacts?: Array<ContactsValue>;
-        messages?:Array<IncomingMessages>;
-    };
-
-
+  field:string;
+  value?:{
+    messaging_product:"whatsapp";
+    statuses?:Array<StatusesValue>;
+    contacts?: Array<ContactsValue>;
+    messages?:Array<IncomingMessages>;
+  };
 }
 
 export interface StatusesValue{
-    id:string;
-    status:string;
-    timestamp:string;
-    recepient_id:string
+  id:string;
+  status:string;
+  timestamp:string;
+  recepient_id:string
 }
 
 export interface ContactsValue{
-    profile:{
-        name:string;
-    };
-    wa_id:string;
+  profile:{
+    name:string;
+  };
+  wa_id:string;
 }
 
 export interface IncomingMessages {
