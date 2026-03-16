@@ -91,7 +91,7 @@ export class WhatsappController{
         throw new Error("Unsupported message type");
       }
 
-      await this.whatsappService.sendText(userMessage, `${sender}`);
+      await this.whatsappService.sendText("helloooooooooooo", `${sender}`);
 
       return res.status(200).json({
         success: true,

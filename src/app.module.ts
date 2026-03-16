@@ -8,6 +8,7 @@ import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
 import { FilesModule } from './modules/files/files.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClientModule } from './modules/client/client.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 
 
 @Module({
@@ -22,7 +23,8 @@ import { ClientModule } from './modules/client/client.module';
     FilesModule,
     PostgresModule,
     UsersModule,
-    ClientModule
+    ClientModule,
+    WhatsappModule
   ]
 })
 export class AppModule implements NestModule{
