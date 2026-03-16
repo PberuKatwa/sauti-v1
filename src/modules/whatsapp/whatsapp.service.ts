@@ -6,18 +6,11 @@ import { WhatsappTemplate, WhatsappText, WhatsappUnionMessage } from "../../type
 
 @Injectable()
 export class WhatsappService{
-
-  private readonly token: string;
-  private readonly phoneId: string;
-
   constructor(
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
-    token:string,
-    phoneId:string
-  ) {
-    this.token = token;
-    this.phoneId = phoneId;
-  };
+    @Inject('WHATSAPP_TOKEN') private readonly token: string,
+    @Inject('WHATSAPP_PHONE_ID') private readonly phoneId: string,
+  ) {};
 
   private async callApi( recipient:string, data:WhatsappUnionMessage ) {
     try {
