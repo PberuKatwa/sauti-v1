@@ -1,4 +1,4 @@
-import { Controller, Inject, Req, Res } from "@nestjs/common";
+import { Controller, Get, Inject, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
@@ -15,7 +15,7 @@ export class WhatsappController{
     private readonly configService: ConfigService
   ) { };
 
-
+  @Get('webhook')
   async verifyWebhook(
     @Req() req: Request,
     @Res() res: Response
