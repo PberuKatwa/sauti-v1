@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { s3Config,postgresEnv,globalConfig} from './config';
+import { s3Config,postgresEnv,globalConfig, whatsappConfig} from './config';
 import { AppLoggerModule } from './logger/logger.module';
 import { GarageModule } from './modules/garage/garage.module';
 import { PostgresModule } from './databases/postgres.module';
@@ -14,7 +14,7 @@ import { ClientModule } from './modules/client/client.module';
   imports: [
     ConfigModule.forRoot(
       {
-        load: [s3Config, postgresEnv, globalConfig],
+        load: [s3Config, postgresEnv, globalConfig, whatsappConfig],
         isGlobal: true,
       }),
     AppLoggerModule,

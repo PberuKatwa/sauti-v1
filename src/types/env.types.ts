@@ -20,7 +20,7 @@ export interface PostgresEnv{
 }
 
 export interface WhatsappConfig{
-  whatsappAcessToken: string;
+  whatsappAccessToken: string;
   phoneNumberId: string;
 }
 

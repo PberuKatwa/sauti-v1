@@ -7,6 +7,7 @@ import { WhatsappTemplate, WhatsappText, WhatsappUnionMessage } from "../../type
 @Injectable()
 export class WhatsappService{
   constructor(
+
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
     @Inject('WHATSAPP_TOKEN') private readonly token: string,
     @Inject('WHATSAPP_PHONE_ID') private readonly phoneId: string,
