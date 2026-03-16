@@ -22,6 +22,7 @@ export interface PostgresEnv{
 export interface WhatsappConfig{
   whatsappAccessToken: string;
   phoneNumberId: string;
+  metaVerifyToken: string;
 }
 
 export type EnvConfig = PostgresEnv | S3Config | GlobalEnvironment
