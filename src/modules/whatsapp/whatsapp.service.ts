@@ -10,7 +10,14 @@ export class WhatsappService{
   private readonly token: string;
   private readonly phoneId: string;
 
-  constructor(@Inject(APP_LOGGER) private readonly logger: AppLogger) { };
+  constructor(
+    @Inject(APP_LOGGER) private readonly logger: AppLogger,
+    token:string,
+    phoneId:string
+  ) {
+    this.token = token;
+    this.phoneId = phoneId;
+  };
 
   private async callApi( recipient:string, data:WhatsappUnionMessage ) {
     try {
