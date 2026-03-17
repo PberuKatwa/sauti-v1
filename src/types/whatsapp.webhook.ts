@@ -1,3 +1,10 @@
+// export type WebhookType =
+//   | { type: 'MESSAGE'; sender: string; content: string }
+//   | { type: 'STATUS'; recipient: string; status: string; messageId: string }
+//   | { type: 'UNKNOWN'; data: any };
+
+export type WebhookType = 'MESSAGE' | 'STATUS' | 'UNKNOWN';
+
 export interface WhatsappWebhook{
   object:"whatsapp_business_account";
   entry:Array<WebhookEntry>;
