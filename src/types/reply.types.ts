@@ -1,6 +1,6 @@
 import { WebhookType } from "./whatsapp.webhook";
 
-export interface whatsappReply {
+export interface WhatsappReply {
   type: WebhookType;
   messageReply: null | string;
   recipient: null | string;

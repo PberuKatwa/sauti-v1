@@ -1,8 +1,9 @@
 import { Inject } from "@nestjs/common";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
-import { IncomingMessages, WebhookType, WhatsappWebhook } from "../../types/whatsapp.webhook";
+import { IncomingMessages, StatusesValue, WebhookType, WhatsappWebhook } from "../../types/whatsapp.webhook";
 import { WhatsappWebhookSchema } from "../../validators/webhook.schema";
+import { WhatsappReply } from "../../types/reply.types";
 
 export class HandlerService{
 
@@ -77,32 +78,36 @@ export class HandlerService{
     }
   }
 
-  public async processWhatsappWebhook(payload: WhatsappWebhook): Promise<{
-    type:WebhookType,
-    messageReply: string,
-    recipient:string
-  }> {
+  private processStatus(statuses: StatusesValue[]) {
+    try {
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async processWhatsappWebhook(payload: WhatsappWebhook): Promise<WhatsappReply> {
     try {
 
       const { type, data } = this.extractWhatsappWebhookType(payload);
 
-      const result = {
+      const result: WhatsappReply = {
         type,
-        messageReply: "null",
-        recipient:"null"
-      }
+        messageReply: null,
+        recipient: null
+      };
+
       if (type === "MESSAGE") {
 
         const messages = data.entry?.[0]?.changes?.[0]?.value.messages;
-        const replyinfo = this.processMessage(messages);
-        return replyinfo;
+        const { messageReply, recipient } = this.processMessage(messages);
+
+        result.messageReply = messageReply;
+        result.recipient = recipient;
 
       }
 
-      return {
-        messageReply: "hello",
-        recipient:recipient
-      }
+      return result;
 
     } catch (error) {
       throw error;
