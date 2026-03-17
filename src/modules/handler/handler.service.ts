@@ -81,6 +81,8 @@ export class HandlerService{
   private processStatus(statuses: StatusesValue[]) {
     try {
 
+      return console.log("GET STATUS", statuses)
+
     } catch (error) {
       throw error;
     }
@@ -105,7 +107,13 @@ export class HandlerService{
         result.messageReply = messageReply;
         result.recipient = recipient;
 
+      } else if (type === "STATUS") {
+
+        const statuses = data.entry?.[0]?.changes?.[0]?.value.statuses;
+        const stat = this.processStatus(statuses);
+
       }
+
 
       return result;
 
