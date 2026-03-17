@@ -3,7 +3,8 @@ import { HandlerService } from "./handler.service";
 
 @Module({
 
-  providers:[HandlerService]
+  providers: [HandlerService],
+  exports:[HandlerService]
 
 })
 export class HandlerModule { };
