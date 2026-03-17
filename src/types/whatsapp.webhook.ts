@@ -22,7 +22,7 @@ export interface StatusesValue{
   id:string;
   status:string;
   timestamp:string;
-  recepient_id:string
+  recipient_id:string
 }
 
 export interface ContactsValue{

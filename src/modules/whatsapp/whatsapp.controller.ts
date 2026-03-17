@@ -62,39 +62,6 @@ export class WhatsappController{
 
       const { messageReply, recipient } = await this.handlerService.whatsappReply(body);
 
-      // const changes = body.entry?.[0]?.changes?.[0];
-
-      // if (!changes) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Invalid webhook payload"
-      //   });
-      // }
-
-      // const messages = changes.value?.messages;
-
-      // if (!messages?.length) {
-      //   return res.status(200).json({
-      //     success: true,
-      //     message: "No messages to process"
-      //   });
-      // }
-
-      // const msg = messages[0];
-      // const sender = parseInt(msg.from);
-      // let userMessage: string | undefined;
-
-      // // Extract message content
-      // if (msg.type === "text") {
-      //   userMessage = msg.text?.body;
-      // } else if (msg.type === "interactive") {
-      //   userMessage = msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id;
-      // }
-
-      // if (!userMessage) {
-      //   throw new Error("Unsupported message type");
-      // }
-
       await this.whatsappService.sendText(messageReply, recipient);
 
       return res.status(200).json({
@@ -103,7 +70,7 @@ export class WhatsappController{
       });
 
     } catch (error: any) {
-      this.logger.error("Error receiving WhatsApp webhook", error.stack);
+      this.logger.error("Error receiving WhatsApp webhook", error);
 
       return res.status(200).json({
         success: false,

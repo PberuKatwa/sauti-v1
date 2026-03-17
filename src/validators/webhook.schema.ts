@@ -4,7 +4,7 @@ const StatusesValueSchema = z.object({
   id: z.string(),
   status: z.string(),
   timestamp: z.string(),
-  recepient_id: z.string(),
+  recipient_id: z.string(),
 });
 
 const ContactsValueSchema = z.object({
