@@ -4,7 +4,7 @@ import { AppLogger } from "../../logger/winston.logger";
 import { WhatsappWebhook } from "../../types/whatsapp.webhook";
 import { WhatsappWebhookSchema } from "../../validators/webhook.schema";
 
-export class HandlerValidator{
+export class HandlerService{
 
   constructor(@Inject(APP_LOGGER) private readonly logger: AppLogger) { };
 
@@ -19,5 +19,7 @@ export class HandlerValidator{
       throw error;
     }
   }
+
+  public
 
 }

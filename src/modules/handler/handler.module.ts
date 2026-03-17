@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { HandlerValidator } from "./handler.validator";
+import { HandlerService } from "./handler.service";
 
 @Module({
 
-  providers:[HandlerValidator]
+  providers:[HandlerService]
 
 })
 export class HandlerModule { };
