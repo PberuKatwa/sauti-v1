@@ -20,8 +20,31 @@ export class HandlerService{
     }
   }
 
-  public whatsappReply(message:string) {
+  public async whatsappReply(message:WhatsappWebhook):Promise<string> {
     try {
+
+      const payload = this.validateWhatsappWebhook(message);
+
+      const changes = payload.entry?.[0]?.changes?.[0];
+
+      const messages = changes.value?.messages;
+
+      if (!messages?.length) return `No ,`
+
+      const msg = messages[0];
+      const sender = parseInt(msg.from);
+      let userMessage: string | undefined;
+
+      // Extract message content
+      if (msg.type === "text") {
+        userMessage = msg.text?.body;
+      } else if (msg.type === "interactive") {
+        userMessage = msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id;
+      }
+
+      if (!userMessage) {
+        throw new Error("Unsupported message type");
+      }
 
     } catch (error) {
       throw error;
