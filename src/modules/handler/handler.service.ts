@@ -77,7 +77,8 @@ export class HandlerService{
     }
   }
 
-  public async processWhatsappWebhook(payload: WhatsappWebhook):Promise<{
+  public async processWhatsappWebhook(payload: WhatsappWebhook): Promise<{
+    type:WebhookType,
     messageReply: string,
     recipient:string
   }> {
@@ -85,10 +86,16 @@ export class HandlerService{
 
       const { type, data } = this.extractWhatsappWebhookType(payload);
 
+      const result = {
+        type,
+        messageReply: "null",
+        recipient:"null"
+      }
       if (type === "MESSAGE") {
 
         const messages = data.entry?.[0]?.changes?.[0]?.value.messages;
-        const { messageReply, recipient } = this.processMessage(messages);
+        const replyinfo = this.processMessage(messages);
+        return replyinfo;
 
       }
 
