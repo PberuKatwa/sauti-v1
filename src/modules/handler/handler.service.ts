@@ -8,7 +8,7 @@ export class HandlerService{
 
   constructor(@Inject(APP_LOGGER) private readonly logger: AppLogger) { };
 
-  private validateWhatsappWebhook(webhook:WhatsappWebhook) {
+  private validateWhatsappWebhook(webhook:WhatsappWebhook):WhatsappWebhook {
     try {
 
       const validatedData = WhatsappWebhookSchema.parse(webhook);
@@ -20,16 +20,46 @@ export class HandlerService{
     }
   }
 
-  public async whatsappReply(message:WhatsappWebhook):Promise<string> {
+  private extractMessageAndRecepient(message: WhatsappWebhook): {
+    message: string,
+    recipient:string
+  }{
+    try {
+
+      const data = this.validateWhatsappWebhook(message);
+      const changes = data.entry?.[0]?.changes?.[0];
+      const messages = changes.value?.messages;
+
+      if (!messages?.length) throw new Error(`No messages were found`);
+
+      const msg = messages[0];
+      const sender = msg.from;
+      let userMessage: string | undefined;
+
+      // Extract message content
+      if (msg.type === "text") {
+        userMessage = msg.text?.body;
+      } else if (msg.type === "interactive") {
+        userMessage = msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id;
+      }
+
+      return {
+        message: userMessage,
+        recipient:sender
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async whatsappReply(message:WhatsappWebhook) {
     try {
 
       const payload = this.validateWhatsappWebhook(message);
-
       const changes = payload.entry?.[0]?.changes?.[0];
-
       const messages = changes.value?.messages;
 
-      if (!messages?.length) return `No ,`
+      if (!messages?.length) return `No message was found`
 
       const msg = messages[0];
       const sender = parseInt(msg.from);
