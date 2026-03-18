@@ -5,6 +5,7 @@ import { IncomingMessages, StatusesValue, WebhookType, WhatsappWebhook } from ".
 import { WhatsappWebhookSchema } from "../../validators/webhook.schema";
 import { WhatsappReply } from "../../types/reply.types";
 import { IntentDetectorService } from "../intent/intent.detector";
+import { BestIntent } from "../../types/intent.types";
 
 export class HandlerService{
 
@@ -66,33 +67,17 @@ export class HandlerService{
   }
 
   private processMessage(messages: IncomingMessages[]):{
-    messageReply: string,
+    intent: BestIntent,
     recipient:string
   } {
     try {
 
       const { userMessage, recipient } = this.extractMessageAndRecepient(messages);
 
-      let messageReply = "UNKNOWN";
-
       const intentResult = this.intentDetector.processIntent(userMessage);
 
-      if( intentResult.id === "MAKE_ORDER" ){
-
-        messageReply = "MAKE ORDER INTENT"
-
-      }else if( intentResult.id === "TRACK_ORDER" ){
-
-        messageReply = "TRACK ORDER INTENT"
-
-      }else if( intentResult.id === "PAY_FOR_ORDER" ){
-
-        messageReply = "PAY FOR ORDER INTENT"
-
-      }
-
       return {
-        messageReply: messageReply,
+        intent:intentResult,
         recipient:recipient
       }
     } catch (error) {
@@ -117,16 +102,16 @@ export class HandlerService{
 
       const result: WhatsappReply = {
         type,
-        messageReply: null,
+        intent: null,
         recipient: null
       };
 
       if (type === "MESSAGE") {
 
         const messages = data.entry?.[0]?.changes?.[0]?.value.messages;
-        const { messageReply, recipient } = this.processMessage(messages);
+        const { intent, recipient } = this.processMessage(messages);
 
-        result.messageReply = messageReply;
+        result.intent = intent;
         result.recipient = recipient;
 
       } else if (type === "STATUS") {
