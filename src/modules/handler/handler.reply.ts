@@ -11,7 +11,7 @@ class HandlerReplyService{
     private readonly intentDetector:IntentDetectorService
   ) { };
 
-  private processMessage(userMessage: string): { messageReply: string }
+  public generateReply(userMessage: string): { messageReply: string }
   {
     try {
 
