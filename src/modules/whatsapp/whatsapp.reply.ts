@@ -3,30 +3,24 @@ import { WhatsappService } from "./whatsapp.service";
 
 export class WhatsappReplyService extends WhatsappService{
 
-  async processMessage(intent: BestIntent) {
+  async processMessage(intent: BestIntent, recipient:string) {
     try {
-
-      let messageReply = "UNKNOWN";
 
       if( intent.id === "MAKE_ORDER" ){
 
-        // whatsappClient.sendText(`Great! Ready to place a new order. What items are you interested in today?`)
-        whatsappClient.sendFlowerCatalog();
-
+        await this.sendFlowerCatalog(recipient);
 
       }else if( intent.id === "TRACK_ORDER" ){
 
-        whatsappClient.sendText(`I can check your order status. Please share your order number or tracking ID.`)
-
+        await this.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
 
       }else if( intent.id === "PAY_FOR_ORDER" ){
 
-        whatsappClient.sendText(`How can I help you with payment? Are you checking options or need help with a transaction?` )
+        await this.sendText(`How can I help you with payment? Are you checking options or need help with a transaction?`, recipient )
 
       }else if( intent.id === "UNKNOWN" ){
 
-        const gemini = new GeminiChatService(config.GEMINI_TOKEN)
-        whatsappClient.sendText( await gemini.basicPrompt(prompt) )
+        await this.sendText("UNKNOWN", recipient)
 
         // whatsappClient.sendTemplate(`hello_world`,'en_US')
         // whatsappClient.sendTemplate(`order_try`,'en_GB')
