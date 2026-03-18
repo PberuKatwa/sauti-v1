@@ -7,7 +7,7 @@ export class WhatsappReplyService extends WhatsappService{
   async processMessage(intent: BestIntent, recipient:string) {
     try {
 
-      if( intent.id === "MAKE_ORDER" ){
+      if( intent.id === "REQUEST_CATALOGUE" ){
 
         await this.sendFlowerCatalog(recipient);
 

@@ -1,8 +1,9 @@
+
 {
   "intents": [
      {
-      "id": "MAKE_ORDER",
-      "label": "Make Order",
+      "id": "REQUEST_CATALOGUE",
+      "label": "request catalogue",
       "phrases": [
         "place an order",
         "make an order",
@@ -88,6 +89,119 @@
         "sympathy",
         "congratulations",
         "celebration"
+      ]
+    },
+    {
+      "id": "CREATE_ORDER",
+      "label": "create order",
+      "phrases": [
+        "generate invoice",
+        "create invoice",
+        "make invoice",
+        "issue invoice",
+        "generate order",
+        "create order record",
+        "process this order",
+        "finalize order record",
+        "confirm submitted order",
+        "complete order processing",
+        "turn this into an order",
+        "log this order",
+        "record this order",
+        "produce invoice for this",
+        "convert this to invoice"
+      ],
+      "strongTokens": [
+        "generate",
+        "create",
+        "issue",
+        "produce",
+        "finalize",
+        "confirm",
+        "complete",
+        "process",
+        "record",
+        "log",
+        "convert",
+        "invoice",
+        "invoicing",
+        "creation",
+        "processing"
+      ],
+      "weakTokens": [
+        "order",
+        "invoice",
+        "record",
+        "details",
+        "submitted",
+        "existing",
+        "request",
+        "data",
+        "items",
+        "entry",
+        "information",
+        "summary",
+        "total",
+        "amount",
+        "customer",
+        "client",
+        "transaction",
+        "reference"
+      ]
+    },
+    {
+      "id": "FETCH_EXISTING_ORDER",
+      "label": "fetch existing order",
+      "phrases": [
+        "get my order",
+        "fetch my order",
+        "retrieve my order",
+        "show my order",
+        "view my order",
+        "check my order",
+        "find my order",
+        "open my order",
+        "pull up my order",
+        "see my order details",
+        "lookup order",
+        "get order details",
+        "retrieve order info",
+        "show existing order",
+        "check order status"
+      ],
+      "strongTokens": [
+        "get",
+        "fetch",
+        "retrieve",
+        "show",
+        "view",
+        "check",
+        "find",
+        "open",
+        "lookup",
+        "pull",
+        "access",
+        "load",
+        "search"
+      ],
+      "weakTokens": [
+        "order",
+        "existing",
+        "submitted",
+        "details",
+        "info",
+        "information",
+        "record",
+        "invoice",
+        "status",
+        "reference",
+        "number",
+        "id",
+        "history",
+        "previous",
+        "transaction",
+        "customer",
+        "client"
       ]
     },
     {
