@@ -1,6 +1,7 @@
 import { Inject } from "@nestjs/common";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
+import { IntentDetectorService } from "../intent/intent.detector";
 
 
 class HandlerReplyService{
