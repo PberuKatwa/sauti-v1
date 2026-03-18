@@ -73,13 +73,6 @@ export class WhatsappReplyService extends WhatsappService{
           : [];
 
         const orderCreated = await this.ordersService.createOrder({clientId:client.id, items:items})
-
-        console.log("orderrrrrrrr", orderCreated);
-        console.log("orderrrrrrrr", orderCreated);
-        console.log("orderrrrrrrr", orderCreated);
-
-        // await this.sendText(`WERE AT ORDER CREATIONNNNNN with ID:${productId}`, recipient)
-
         await this.sendOrderInvoice(recipient, orderCreated)
 
       }
