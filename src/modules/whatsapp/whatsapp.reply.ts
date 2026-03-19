@@ -72,7 +72,7 @@ export class WhatsappReplyService extends WhatsappService{
             ]
           : [];
 
-        const orderCreated = await this.ordersService.createOrder({clientId:client.id, items:items})
+        const orderCreated = await this.ordersService.createOrder({ clientId: client.id, items: items })
         await this.sendOrderInvoice(recipient, orderCreated)
 
       }
@@ -166,15 +166,15 @@ export class WhatsappReplyService extends WhatsappService{
             {
               type: "reply",
               reply: {
-                id: `pay_order_${order.id}`,
+                id: `pay for order OrderId:${order.id}`,
                 title: "Pay Now 💳"
               }
             },
             {
               type: "reply",
               reply: {
-                id: `cancel_order_${order.id}`,
-                title: "Cancel Order ❌"
+                id: `track order location - OrderId:${order.id}`,
+                title: "Track Order Location"
               }
             }
           ]

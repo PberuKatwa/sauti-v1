@@ -29,7 +29,7 @@ export class HandlerService{
       if (value.messages && value.messages.length > 0) type = "MESSAGE";
       if (value.statuses && value.statuses.length > 0) type = "STATUS";
 
-
+      this.logger.info(`Successfully extracted webhook type of ${type}.`)
       return {
         type: type,
         data:validatedData
@@ -55,18 +55,15 @@ export class HandlerService{
       let userMessage: string | null = null;
 
       if (msg.type === "text") {
-        userMessage = msg.text?.body ?? null;
+        userMessage = msg.text?.body;
       }
 
       else if (msg.type === "button") {
-        userMessage = msg.button?.payload || msg.button?.text || null;
+        userMessage = msg.button?.payload;
       }
 
       else if (msg.type === "interactive") {
-        userMessage =
-          msg.interactive?.button_reply?.title ||
-          msg.interactive?.list_reply?.title ||
-          null;
+        userMessage =  msg.interactive?.button_reply?.id
       }
 
       if (!userMessage) {
@@ -91,10 +88,15 @@ export class HandlerService{
     try {
 
       const { userMessage, recipient } = this.extractMessageAndRecepient(messages);
-      console.log("userr messages", userMessage)
+
+      this.logger.info(`Successfully extracted user message and recipient`, {
+        userMessage: userMessage,
+        recipient:recipient
+      })
 
       const intentResult = this.intentDetector.processIntent(userMessage);
 
+      this.logger.info(`Successfully detected intent wit id:${intentResult.id}`);
       return {
         userMessage:userMessage,
         intent:intentResult,
@@ -117,6 +119,8 @@ export class HandlerService{
 
   public async processWhatsappWebhook(payload: WhatsappWebhook): Promise<WhatsappReply> {
     try {
+
+      this.logger.warn(`Attempting to process whatsapp webhook`)
 
       const { type, data } = this.extractWhatsappWebhookType(payload);
 
@@ -143,6 +147,7 @@ export class HandlerService{
 
       }
 
+      this.logger.info(`Successfully processed whatsapp webhook`)
       return result;
     } catch (error) {
       throw error;
