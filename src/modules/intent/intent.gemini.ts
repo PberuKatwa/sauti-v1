@@ -14,7 +14,7 @@ export class IntentGeminiService {
     this.client = new GoogleGenAI({ apiKey });
   }
 
-  async basicPrompt(
+  async getIntent(
     userMessage: string,
     model: string = "gemini-2.5-flash"
   ): Promise<string> {
