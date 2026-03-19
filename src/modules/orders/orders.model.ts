@@ -186,6 +186,44 @@ export class OrdersModel {
     }
   }
 
+  async fetchLatestOrderByClient(clientId: number): Promise<OrderProfile> {
+    try {
+
+      this.logger.warn(`Attempting to fetch latest order for client id: ${clientId}`);
+
+      const query = `
+        SELECT
+          id,
+          client_id,
+          items,
+          subtotal,
+          tax,
+          total,
+          status,
+          payment_status,
+          invoice_number
+        FROM orders
+        WHERE client_id = $1
+        ORDER BY id DESC
+        LIMIT 1;
+      `;
+
+      const pool = this.pgConfig.getPool();
+      const result = await pool.query(query, [clientId]);
+
+      if (result.rowCount === 0) {
+        throw new Error(`No orders found for client id ${clientId}`);
+      }
+
+      const order: OrderProfile = result.rows[0];
+
+      return order;
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async fetchClientOrders(clientId: number): Promise<OrderProfile[]> {
     try {
 

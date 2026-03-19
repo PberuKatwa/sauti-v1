@@ -54,7 +54,9 @@ export class WhatsappReplyService extends WhatsappService{
 
         await this.sendFlowerCatalog(recipient);
 
-      } else if (intent.id === "CREATE_ORDER") {
+      }
+
+      else if (intent.id === "CREATE_ORDER") {
 
         const client = await this.clientService.createClient({ phoneNumber: parseInt(recipient) });
 
@@ -75,24 +77,39 @@ export class WhatsappReplyService extends WhatsappService{
         const orderCreated = await this.ordersService.createOrder({ clientId: client.id, items: items })
         await this.sendOrderInvoice(recipient, orderCreated)
 
-      } else if (intent.id === "FETCH_EXISTING_ORDER") {
+      }
+
+      else if (intent.id === "FETCH_ALL_ORDERS") {
 
         const client = await this.clientService.fetchClientByPhone(parseInt(recipient));
-
         const orders = await this.ordersService.fetchClientOrders(client.id);
-
-        console.log("ordersss", orders)
-        console.log("ordersss", orders)
-        console.log("ordersss", orders)
-
         await this.sendOrdersList(recipient, orders);
 
       }
+
+      else if (intent.id === "FETCH_SINGLE_ORDER") {
+
+        const match = userMessage.match(/ORDER_ID:(\d+)/);
+        const orderId = match ? Number(match[1]) : null;
+
+        let currentOrder = null;
+        if (orderId) {
+          currentOrder = await this.ordersService.fetchOrder(orderId);
+        } else {
+          const client = await this.clientService.fetchClientByPhone(parseInt(recipient));
+          currentOrder = await this.ordersService.fetchLatestOrderByClient(client.id)
+        }
+
+        await this.sendOrderInvoice(recipient, currentOrder);
+
+      }
+
       else if (intent.id === "TRACK_ORDER") {
 
         await this.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
 
-      }else if( intent.id === "PAY_FOR_ORDER" ){
+      }
+      else if (intent.id === "PAY_FOR_ORDER") {
 
         await this.sendText(`How can I help you with payment? Are you checking options or need help with a transaction?`, recipient )
 
