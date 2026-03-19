@@ -114,6 +114,7 @@ export class IntentDetectorService {
         }
       }
 
+      console.log("CURR INTENT", bestIntent)
       // --- 4. Update Best Intent ---
       if (score > bestIntent.score) {
         bestIntent = {
@@ -128,7 +129,7 @@ export class IntentDetectorService {
       }
     }
 
-    console.log("best intent", bestIntent)
+    console.log("\n\n FINALLLLL best intent", bestIntent)
 
     return bestIntent.score < this.SCORES.MIN_THRESHOLD
       ? this.getInitialBestIntent()

@@ -87,8 +87,6 @@ export class WhatsappReplyService extends WhatsappService{
 
         await this.sendOrdersList(recipient, orders);
 
-        // await this.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
-
       }
       else if (intent.id === "TRACK_ORDER") {
 
@@ -190,6 +188,13 @@ export class WhatsappReplyService extends WhatsappService{
                 id: `track order location - OrderId:${order.id}`,
                 title: "Track Order Location"
               }
+            },
+            {
+              type: "reply",
+              reply: {
+                id: `cancel order - OrderId:${order.id}`,
+                title: "Track Order Location"
+              }
             }
           ]
         }
@@ -203,13 +208,24 @@ export class WhatsappReplyService extends WhatsappService{
 
     const limitedOrders = orders.slice(0, 5);
 
-    const rows = limitedOrders.map(order => ({
-      id: `VIEW_ORDER|ORDER_ID:${order.id}`,
-      title: `🧾 ${order.invoice_number}`,
-      description:
-        `KES ${Number(order.total).toLocaleString()} • ` +
-        `${order.status.toUpperCase()} • ${order.payment_status.toUpperCase()}`
-    }));
+    const rows = limitedOrders.map(order => {
+      const itemsSummary = order.items
+        .slice(0, 2)
+        .map(item => `${item.name} x${item.quantity}`)
+        .join(", ");
+
+      const moreItems =
+        order.items.length > 2 ? ` +${order.items.length - 2} more` : "";
+
+      return {
+        id: `view individual order - ORDER_ID:${order.id}`,
+        title: `🧾 ${order.invoice_number}`,
+        description:
+          `${itemsSummary}${moreItems}\n` +
+          `KES ${Number(order.total).toLocaleString()} • ` +
+          `${order.status.toUpperCase()} • ${order.payment_status.toUpperCase()}`
+      };
+    });
 
     const payload = {
       messaging_product: "whatsapp",
