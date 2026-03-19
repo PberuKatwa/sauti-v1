@@ -15,7 +15,7 @@ export class IntentDetectorService {
     STRONG_TOKEN: 3,
     WEAK_TOKEN: 1,
     FUZZY_MATCH: 1.5,
-    MIN_THRESHOLD: 4,
+    MIN_THRESHOLD: 8,
     PARTIAL_PHRASE_MULTIPLIER: 0.5,
   };
 
@@ -33,108 +33,143 @@ export class IntentDetectorService {
   /**
    * Orchestrates the detection flow
    */
-  public processIntent(message: string): BestIntent {
-    const { stemmedTokens } = this.tokenize(message);
-    let bestIntent: BestIntent = this.getInitialBestIntent();
+   public processIntent(message: string): BestIntent {
+     console.log("\n=== PROCESSING MESSAGE ===");
+     console.log("Raw message:", message);
 
-    for (const intent of this.intents) {
-      let score = 0;
-      const usedTokenIndices = new Set<number>();
+     const { stemmedTokens, originalTokens } = this.tokenize(message);
+     console.log("Tokenized message:", originalTokens);
+     console.log("Stemmed tokens (without stop words):", stemmedTokens);
 
-      const matchedStrongTokens: string[] = [];
-      const matchedFuzzyTokens: string[] = [];
-      const matchedWeakTokens: string[] = [];
-      const matchedPartialTokens: string[] = [];
+     let bestIntent: BestIntent = this.getInitialBestIntent();
 
-      // --- 1. Phrase Matching ---
-      for (const phrase of intent.phrases) {
-        const phraseTokens = this.tokenize(phrase).stemmedTokens;
-        let intersectionTokens = 0;
+     for (const intent of this.intents) {
+       let score = 0;
+       const usedTokenIndices = new Set<number>();
 
-        stemmedTokens.forEach((token, index) => {
-          if (phraseTokens.includes(token)) {
-            intersectionTokens++;
-            usedTokenIndices.add(index);
-          }
-        });
+       const matchedStrongTokens: string[] = [];
+       const matchedFuzzyTokens: string[] = [];
+       const matchedWeakTokens: string[] = [];
+       const matchedPartialTokens: string[] = [];
 
-        const matchRatio = intersectionTokens / phraseTokens.length;
+       console.log("\n--- Evaluating Intent:", intent.label, `(ID: ${intent.id}) ---`);
 
-        if (matchRatio === 1 && phraseTokens.length > 1) {
-          return {
-            id: intent.id,
-            label: intent.label,
-            score: this.SCORES.EXACT_PHRASE,
-            matchedPhrase: phrase,
-          };
-        } else if (matchRatio < 1 && matchRatio > 0 && phraseTokens.length > 2) {
-          score += this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
-          matchedPartialTokens.push(phrase);
-        }
-      }
+       // --- 1. Phrase Matching ---
+       for (const phrase of intent.phrases) {
+         const phraseTokens = this.tokenize(phrase).stemmedTokens;
+         let intersectionTokens = 0;
 
-      // --- 2. Strong Token Scoring ---
-      if (intent.strongTokens) {
-        for (const sToken of intent.strongTokens) {
-          const sTokenized = this.tokenizeSingleWord(sToken).stemmed;
-          for (let i = 0; i < stemmedTokens.length; i++) {
-            if (usedTokenIndices.has(i)) continue;
+         stemmedTokens.forEach((token, index) => {
+           if (phraseTokens.includes(token)) {
+             intersectionTokens++;
+             usedTokenIndices.add(index);
+           }
+         });
 
-            const userToken = stemmedTokens[i];
-            if (userToken === sTokenized) {
-              score += this.SCORES.STRONG_TOKEN;
-              usedTokenIndices.add(i);
-              matchedStrongTokens.push(userToken);
-            } else {
-              const distance = getLevenshteinDistance(sTokenized, userToken);
-              if (distance <= 1) {
-                score += this.SCORES.FUZZY_MATCH;
-                usedTokenIndices.add(i);
-                matchedFuzzyTokens.push(sToken);
-              }
-            }
-          }
-        }
-      }
+         const matchRatio = intersectionTokens / phraseTokens.length;
 
-      // --- 3. Weak Token Scoring ---
-      if (intent.weakTokens) {
-        for (const wToken of intent.weakTokens) {
-          const wTokenized = this.tokenizeSingleWord(wToken).stemmed;
-          for (let i = 0; i < stemmedTokens.length; i++) {
-            if (usedTokenIndices.has(i)) continue;
+         console.log(`Phrase check: "${phrase}"`);
+         console.log("  Phrase tokens:", phraseTokens);
+         console.log(`  Intersection tokens: ${intersectionTokens}, Match ratio: ${matchRatio}`);
 
-            const userToken = stemmedTokens[i];
-            if (userToken === wTokenized) {
-              score += this.SCORES.WEAK_TOKEN;
-              matchedWeakTokens.push(wToken);
-              usedTokenIndices.add(i);
-            }
-          }
-        }
-      }
+         if (matchRatio === 1 && phraseTokens.length > 1) {
+           console.log("  -> Exact phrase match! Returning intent immediately.");
+           return {
+             id: intent.id,
+             label: intent.label,
+             score: this.SCORES.EXACT_PHRASE,
+             matchedPhrase: phrase,
+           };
+         } else if (matchRatio < 1 && matchRatio > 0 && phraseTokens.length > 2) {
+           const partialScore = this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
+           score += partialScore;
+           matchedPartialTokens.push(phrase);
+           console.log(`  -> Partial match. Added partial score: ${partialScore.toFixed(2)}`);
+         }
+       }
 
-      console.log("CURR INTENT", bestIntent)
-      // --- 4. Update Best Intent ---
-      if (score > bestIntent.score) {
-        bestIntent = {
-          id: intent.id,
-          label: intent.label,
-          score: score,
-          partialPhrases: matchedPartialTokens,
-          weakTokens: matchedWeakTokens,
-          strongTokens: matchedStrongTokens,
-          fuzzyTokens: matchedFuzzyTokens,
-        };
-      }
-    }
+       // --- 2. Strong Token Scoring ---
+       if (intent.strongTokens) {
+         console.log("Strong tokens for intent:", intent.strongTokens);
 
-    console.log("\n\n FINALLLLL best intent", bestIntent)
+         for (const sToken of intent.strongTokens) {
+           const sTokenized = this.tokenizeSingleWord(sToken).stemmed;
 
-    return bestIntent.score < this.SCORES.MIN_THRESHOLD
-      ? this.getInitialBestIntent()
-      : bestIntent;
-  }
+           for (let i = 0; i < stemmedTokens.length; i++) {
+             if (usedTokenIndices.has(i)) continue;
+
+             const userToken = stemmedTokens[i];
+
+             if (userToken === sTokenized) {
+               score += this.SCORES.STRONG_TOKEN;
+               usedTokenIndices.add(i);
+               matchedStrongTokens.push(userToken);
+               console.log(`  -> Strong token matched: "${userToken}" (+${this.SCORES.STRONG_TOKEN})`);
+             } else {
+               const distance = getLevenshteinDistance(sTokenized, userToken);
+               if (distance <= 1) {
+                 score += this.SCORES.FUZZY_MATCH;
+                 usedTokenIndices.add(i);
+                 matchedFuzzyTokens.push(sToken);
+                 console.log(`  -> Fuzzy token matched: "${userToken}" ~ "${sToken}" (+${this.SCORES.FUZZY_MATCH})`);
+               }
+             }
+           }
+         }
+       }
+
+       // --- 3. Weak Token Scoring ---
+       if (intent.weakTokens) {
+         console.log("Weak tokens for intent:", intent.weakTokens);
+
+         for (const wToken of intent.weakTokens) {
+           const wTokenized = this.tokenizeSingleWord(wToken).stemmed;
+
+           for (let i = 0; i < stemmedTokens.length; i++) {
+             if (usedTokenIndices.has(i)) continue;
+
+             const userToken = stemmedTokens[i];
+
+             if (userToken === wTokenized) {
+               score += this.SCORES.WEAK_TOKEN;
+               matchedWeakTokens.push(wToken);
+               usedTokenIndices.add(i);
+               console.log(`  -> Weak token matched: "${userToken}" (+${this.SCORES.WEAK_TOKEN})`);
+             }
+           }
+         }
+       }
+
+       console.log(`Total score for intent "${intent.label}": ${score.toFixed(2)}`);
+       console.log("Matched strong tokens:", matchedStrongTokens);
+       console.log("Matched fuzzy tokens:", matchedFuzzyTokens);
+       console.log("Matched weak tokens:", matchedWeakTokens);
+       console.log("Matched partial phrases:", matchedPartialTokens);
+
+       // --- 4. Update Best Intent ---
+       if (score > bestIntent.score) {
+         console.log(`-> "${intent.label}" is the new best intent!`);
+         bestIntent = {
+           id: intent.id,
+           label: intent.label,
+           score: score,
+           partialPhrases: matchedPartialTokens,
+           weakTokens: matchedWeakTokens,
+           strongTokens: matchedStrongTokens,
+           fuzzyTokens: matchedFuzzyTokens,
+         };
+       } else {
+         console.log(`-> "${intent.label}" did not surpass the current best intent.`);
+       }
+     }
+
+     console.log("\n=== FINAL BEST INTENT ===");
+     console.log(bestIntent);
+
+     return bestIntent.score < this.SCORES.MIN_THRESHOLD
+       ? this.getInitialBestIntent()
+       : bestIntent;
+   }
 
   // --- Internal NLP Logic ---
 
@@ -144,10 +179,16 @@ export class IntentDetectorService {
       .split(/\s+/)
       .filter(Boolean);
 
-    const originalTokens: string[] = cleanText;
-    const stemmedTokens: string[] = originalTokens
-      .filter(t => !this.STOP_WORDS.has(t))
-      .map(t => stemmer(t));
+    // Remove duplicates while keeping order
+    const originalTokens: string[] = Array.from(new Set(cleanText));
+
+    const stemmedTokens: string[] = Array.from(
+      new Set(
+        originalTokens
+          .filter(t => !this.STOP_WORDS.has(t))
+          .map(t => stemmer(t))
+      )
+    );
 
     return { originalTokens, stemmedTokens };
   }

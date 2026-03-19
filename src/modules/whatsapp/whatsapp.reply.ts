@@ -228,7 +228,7 @@ export class WhatsappReplyService extends WhatsappService{
         order.items.length > 2 ? ` +${order.items.length - 2} more` : "";
 
       return {
-        id: `view individual order - ORDER_ID:${order.id}`,
+        id: `retrieve order info - ORDER_ID:${order.id}`,
         title: `🧾 ${order.invoice_number}`,
         description:
           `${itemsSummary}${moreItems}\n` +
