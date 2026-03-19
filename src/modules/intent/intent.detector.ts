@@ -128,6 +128,8 @@ export class IntentDetectorService {
       }
     }
 
+    console.log("best intent", bestIntent)
+
     return bestIntent.score < this.SCORES.MIN_THRESHOLD
       ? this.getInitialBestIntent()
       : bestIntent;

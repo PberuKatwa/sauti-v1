@@ -2,7 +2,7 @@ import { Inject } from "@nestjs/common";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
 import { BestIntent } from "../../types/intent.types";
-import { OrderItem } from "../../types/orders.types";
+import { OrderItem, OrderProfile } from "../../types/orders.types";
 import { WhatsappService } from "./whatsapp.service";
 import { ClientModel } from "../client/client.model";
 import { OrdersModel } from "../orders/orders.model";
@@ -74,6 +74,20 @@ export class WhatsappReplyService extends WhatsappService{
 
         const orderCreated = await this.ordersService.createOrder({ clientId: client.id, items: items })
         await this.sendOrderInvoice(recipient, orderCreated)
+
+      } else if (intent.id === "FETCH_EXISTING_ORDER") {
+
+        const client = await this.clientService.fetchClientByPhone(parseInt(recipient));
+
+        const orders = await this.ordersService.fetchClientOrders(client.id);
+
+        console.log("ordersss", orders)
+        console.log("ordersss", orders)
+        console.log("ordersss", orders)
+
+        await this.sendOrdersList(recipient, orders);
+
+        // await this.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
 
       }
       else if (intent.id === "TRACK_ORDER") {
@@ -176,6 +190,49 @@ export class WhatsappReplyService extends WhatsappService{
                 id: `track order location - OrderId:${order.id}`,
                 title: "Track Order Location"
               }
+            }
+          ]
+        }
+      }
+    };
+
+    await this.callApi(recipient, payload);
+  }
+
+  async sendOrdersList(recipient:string,orders:OrderProfile[]) {
+
+    const limitedOrders = orders.slice(0, 5);
+
+    const rows = limitedOrders.map(order => ({
+      id: `VIEW_ORDER|ORDER_ID:${order.id}`,
+      title: `🧾 ${order.invoice_number}`,
+      description:
+        `KES ${Number(order.total).toLocaleString()} • ` +
+        `${order.status.toUpperCase()} • ${order.payment_status.toUpperCase()}`
+    }));
+
+    const payload = {
+      messaging_product: "whatsapp",
+      to: recipient,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        header: {
+          type: "text",
+          text: "📦 Your Recent Orders"
+        },
+        body: {
+          text: "Here are your latest orders. Tap one to view details 👇"
+        },
+        footer: {
+          text: "Purple Hearts 💜"
+        },
+        action: {
+          button: "View Orders",
+          sections: [
+            {
+              title: "Recent Orders",
+              rows
             }
           ]
         }

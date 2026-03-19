@@ -63,7 +63,10 @@ export class HandlerService{
       }
 
       else if (msg.type === "interactive") {
-        userMessage =  msg.interactive?.button_reply?.id
+        userMessage =
+          msg.interactive?.button_reply?.id ||
+          msg.interactive?.list_reply?.id ||
+          null;
       }
 
       if (!userMessage) {
