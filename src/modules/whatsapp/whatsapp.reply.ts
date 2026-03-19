@@ -58,7 +58,11 @@ export class WhatsappReplyService extends WhatsappService{
         await this.sendHelpMenu(recipient);
       }
 
-      else if( intent.id === "REQUEST_CATALOGUE" ){
+      else if( intent.id === "COMPLAINT" ){
+        await this.sendComplaintEscalation(recipient);
+      }
+
+      else if (intent.id === "REQUEST_CATALOGUE") {
         await this.sendFlowerCatalog(recipient);
       }
 
@@ -121,12 +125,12 @@ export class WhatsappReplyService extends WhatsappService{
 
       }else if( intent.id === "UNKNOWN" ){
 
-        await this.sendTemplate("welcome_actions","en", recipient)
+        await this.sendHelpMenu(recipient);
 
       }
 
     } catch (error) {
-      await this.sendTemplate("welcome_actions","en", recipient)
+      await this.sendHelpMenu(recipient);
       throw error;
     }
   }
