@@ -120,6 +120,7 @@ export class WhatsappReplyService extends WhatsappService{
       }
 
     } catch (error) {
+      await this.sendTemplate("welcome_actions","en", recipient)
       throw error;
     }
   }

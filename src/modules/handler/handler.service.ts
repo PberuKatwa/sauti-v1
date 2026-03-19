@@ -83,11 +83,11 @@ export class HandlerService{
     }
   }
 
-  private processMessage(messages: IncomingMessages[]): {
+  private async processMessage(messages: IncomingMessages[]):Promise< {
     userMessage:string,
     intent: BestIntent,
     recipient:string
-  } {
+  }> {
     try {
 
       const { userMessage, recipient } = this.extractMessageAndRecepient(messages);
@@ -97,7 +97,7 @@ export class HandlerService{
         recipient:recipient
       })
 
-      const intentResult = this.intentDetector.processIntent(userMessage);
+      const intentResult = await this.intentDetector.getFinalIntent(userMessage);
 
       this.logger.info(`Successfully detected intent wit id:${intentResult.id}`);
       return {
@@ -137,7 +137,7 @@ export class HandlerService{
       if (type === "MESSAGE") {
 
         const messages = data.entry?.[0]?.changes?.[0]?.value.messages;
-        const { intent, recipient, userMessage } = this.processMessage(messages);
+        const { intent, recipient, userMessage } = await this.processMessage(messages);
 
         result.intent = intent;
         result.userMessage = userMessage;

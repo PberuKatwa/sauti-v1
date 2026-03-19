@@ -35,10 +35,10 @@ export class IntentDetectorService {
   public async getFinalIntent(message: string): Promise<BestIntent>{
     try {
 
-      const intent = this.processIntent(message);
+      let intent = this.processIntent(message);
 
       if (intent.id === "UNKNOWN") {
-
+        intent = await this.geminiService.getIntent(message);
       }
 
       return intent
@@ -51,12 +51,8 @@ export class IntentDetectorService {
    * Orchestrates the detection flow
    */
    public processIntent(message: string): BestIntent {
-     console.log("\n=== PROCESSING MESSAGE ===");
-     console.log("Raw message:", message);
 
      const { stemmedTokens, originalTokens } = this.tokenize(message);
-     console.log("Tokenized message:", originalTokens);
-     console.log("Stemmed tokens (without stop words):", stemmedTokens);
 
      let bestIntent: BestIntent = this.getInitialBestIntent();
 
@@ -85,12 +81,7 @@ export class IntentDetectorService {
 
          const matchRatio = intersectionTokens / phraseTokens.length;
 
-         console.log(`Phrase check: "${phrase}"`);
-         console.log("  Phrase tokens:", phraseTokens);
-         console.log(`  Intersection tokens: ${intersectionTokens}, Match ratio: ${matchRatio}`);
-
          if (matchRatio === 1 && phraseTokens.length > 1) {
-           console.log("  -> Exact phrase match! Returning intent immediately.");
            return {
              id: intent.id,
              label: intent.label,
@@ -101,13 +92,11 @@ export class IntentDetectorService {
            const partialScore = this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
            score += partialScore;
            matchedPartialTokens.push(phrase);
-           console.log(`  -> Partial match. Added partial score: ${partialScore.toFixed(2)}`);
          }
        }
 
        // --- 2. Strong Token Scoring ---
        if (intent.strongTokens) {
-         console.log("Strong tokens for intent:", intent.strongTokens);
 
          for (const sToken of intent.strongTokens) {
            const sTokenized = this.tokenizeSingleWord(sToken).stemmed;
@@ -121,14 +110,12 @@ export class IntentDetectorService {
                score += this.SCORES.STRONG_TOKEN;
                usedTokenIndices.add(i);
                matchedStrongTokens.push(userToken);
-               console.log(`  -> Strong token matched: "${userToken}" (+${this.SCORES.STRONG_TOKEN})`);
              } else {
                const distance = getLevenshteinDistance(sTokenized, userToken);
                if (distance <= 1) {
                  score += this.SCORES.FUZZY_MATCH;
                  usedTokenIndices.add(i);
                  matchedFuzzyTokens.push(sToken);
-                 console.log(`  -> Fuzzy token matched: "${userToken}" ~ "${sToken}" (+${this.SCORES.FUZZY_MATCH})`);
                }
              }
            }
@@ -137,7 +124,6 @@ export class IntentDetectorService {
 
        // --- 3. Weak Token Scoring ---
        if (intent.weakTokens) {
-         console.log("Weak tokens for intent:", intent.weakTokens);
 
          for (const wToken of intent.weakTokens) {
            const wTokenized = this.tokenizeSingleWord(wToken).stemmed;
@@ -151,7 +137,6 @@ export class IntentDetectorService {
                score += this.SCORES.WEAK_TOKEN;
                matchedWeakTokens.push(wToken);
                usedTokenIndices.add(i);
-               console.log(`  -> Weak token matched: "${userToken}" (+${this.SCORES.WEAK_TOKEN})`);
              }
            }
          }

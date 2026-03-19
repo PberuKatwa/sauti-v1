@@ -13,7 +13,7 @@ const UNKNOWN_INTENT: BestIntent = {
   fuzzyTokens: [],
 };
 
-export function parseIntent(output: string): BestIntent {
+export function parseLlmIntent(output: string): BestIntent {
   try {
     const cleaned = output
       .trim()

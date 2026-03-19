@@ -17,7 +17,8 @@ import { APP_LOGGER } from "../../logger/logger.provider";
         const intents = loadIntentsFromFile(filePath);
 
         return new IntentDetectorService(intents, geminiService);
-      }
+      },
+      inject:[IntentGeminiService]
     },
     {
       provide: IntentGeminiService,
