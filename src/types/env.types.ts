@@ -25,6 +25,10 @@ export interface WhatsappConfig{
   metaVerifyToken: string;
 }
 
+export interface LlmConfig {
+  geminiApiKey: string;
+}
+
 export type EnvConfig = PostgresEnv | S3Config | GlobalEnvironment
 
 export type SuffixChecker = (value:string,suffix:string) => boolean;
