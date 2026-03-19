@@ -31,11 +31,19 @@ const IncomingMessagesSchema = z.object({
   from: z.string(),
   id: z.string(),
   timestamp: z.string(),
-  type: z.enum(["text", "interactive"]),
+
+  type: z.enum(["text", "interactive", "button"]),
+
   text: z.object({
     body: z.string(),
   }).optional(),
+
   interactive: InteractiveSchema.optional(),
+
+  button: z.object({
+    payload: z.string(),
+    text: z.string(),
+  }).optional(),
 });
 
 export const WhatsappWebhookSchema = z.object({

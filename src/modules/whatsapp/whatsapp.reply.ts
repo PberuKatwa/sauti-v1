@@ -86,7 +86,6 @@ export class WhatsappReplyService extends WhatsappService{
 
       }else if( intent.id === "UNKNOWN" ){
 
-        await this.sendText("UNKNOWN", recipient)
         await this.sendTemplate("welcome_actions","en", recipient)
 
       }

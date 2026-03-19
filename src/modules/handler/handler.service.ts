@@ -41,25 +41,42 @@ export class HandlerService{
   }
 
   private extractMessageAndRecepient(messages: IncomingMessages[]): {
-    userMessage: string,
-    recipient:string
-  }{
+    userMessage: string;
+    recipient: string;
+  } {
     try {
+      if (!messages || messages.length === 0) {
+        throw new Error("No messages received");
+      }
 
       const msg = messages[0];
       const sender = msg.from;
-      let userMessage: string | undefined;
+
+      let userMessage: string | null = null;
 
       if (msg.type === "text") {
-        userMessage = msg.text?.body;
-      } else if (msg.type === "interactive") {
-        userMessage = msg.interactive?.button_reply?.id || msg.interactive?.list_reply?.id;
+        userMessage = msg.text?.body ?? null;
+      }
+
+      else if (msg.type === "button") {
+        userMessage = msg.button?.payload || msg.button?.text || null;
+      }
+
+      else if (msg.type === "interactive") {
+        userMessage =
+          msg.interactive?.button_reply?.title ||
+          msg.interactive?.list_reply?.title ||
+          null;
+      }
+
+      if (!userMessage) {
+        throw new Error(`Unsupported or empty message type: ${msg.type}`);
       }
 
       return {
-        userMessage: userMessage,
-        recipient:sender
-      }
+        userMessage,
+        recipient: sender,
+      };
 
     } catch (error) {
       throw error;

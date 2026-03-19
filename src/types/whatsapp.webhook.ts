@@ -44,7 +44,7 @@ export interface IncomingMessages {
   id: string;
   timestamp: string;
 
-  type: "text" | "interactive";
+  type: "text" | "interactive" | "button";
 
   text?: {
     body: string;
@@ -61,5 +61,10 @@ export interface IncomingMessages {
       title: string;
       description?: string;
     };
+  };
+
+  button?: {
+    payload: string;
+    text: string;
   };
 }
