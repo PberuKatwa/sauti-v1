@@ -515,6 +515,7 @@
     "entity": "CustomerCare",
     "category": "General",
     "organisation_tokens": [
+      "hello",
       "Hello there purple hearts",
       "Hey, I am looking for some beautiful flowers today",
       "Good morning, I need to send someone a bouquet"

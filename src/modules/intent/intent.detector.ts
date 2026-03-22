@@ -46,7 +46,13 @@ export class IntentDetectorService {
     usedTokenIndices: Set<number>,
     phraseTokens: string[],
     stemmedTokens: string[]
-  ) {
+  ): {
+    matchedTokens: string[],
+    phraseScore: number,
+    usedIndices: Set<number>,
+    isExactMatch: boolean
+  } {
+
     const messageIndex: Record<string, number[]> = {};
     stemmedTokens.forEach((token, idx) => {
       if (!messageIndex[token]) messageIndex[token] = [];
@@ -91,6 +97,7 @@ export class IntentDetectorService {
 
       for (const pToken of phraseTokenized) {
         const occurrences = messageIndex[pToken];
+
         const availableIdx = occurrences?.find(idx =>
           !usedTokenIndices.has(idx) && !newlyMatchedIndices.includes(idx)
         );
@@ -118,73 +125,100 @@ export class IntentDetectorService {
       usedIndices: usedTokenIndices,
       isExactMatch: false
     };
+
   }
 
+  /**
+   * Main detection entry point
+   */
   public processIntent(message: string): BestIntent {
-    const { stemmedTokens } = this.tokenize(message);
+    const { stemmedTokens, originalTokens } = this.tokenize(message);
+
     let bestIntent: BestIntent = this.getInitialBestIntent();
 
     for (const intent of this.intents) {
+
       let score = 0;
       const usedTokenIndices = new Set<number>();
+
       let matchedOrganisationTokens: string[] = [];
       let matchedPhraseTokens: string[] = [];
 
+      // Organisation Token Matching
       if (intent.organisation_tokens) {
+
         const { matchedTokens, phraseScore, usedIndices, isExactMatch } =
-          this.scoreTokensInverted(usedTokenIndices, intent.organisation_tokens, stemmedTokens);
+          this.scoreTokensInverted(usedTokenIndices,intent.organisation_tokens, stemmedTokens);
+
+        console.log("founddddd organisationnn", matchedTokens, phraseScore, usedIndices, isExactMatch)
 
         if (isExactMatch) {
           return {
-            ...this.mapToBestIntent(intent, message, phraseScore),
+            id: intent.id,
+            name: intent.name,
+            entity: intent.entity || "UNKNOWN",
+            description: intent.description,
+            userMessage:message,
+            score:phraseScore,
             organisation_tokens: matchedTokens,
             phrase_tokens: []
-          };
+          }
         }
+
         score += phraseScore;
+        usedIndices.forEach(index => usedTokenIndices.add(index));
         matchedOrganisationTokens = matchedTokens;
       }
 
+      // Phrase Matching
       if (intent.phrase_tokens) {
-        const { matchedTokens, phraseScore, isExactMatch } =
-          this.scoreTokensInverted(usedTokenIndices, intent.phrase_tokens, stemmedTokens);
+
+        const { matchedTokens, phraseScore, usedIndices, isExactMatch } =
+          this.scoreTokensInverted(usedTokenIndices,intent.phrase_tokens, stemmedTokens);
+
+        console.log("PHRASEEEEEEEEEE", matchedTokens, phraseScore, usedIndices, isExactMatch)
 
         if (isExactMatch) {
           return {
-            ...this.mapToBestIntent(intent, message, phraseScore),
+            id: intent.id,
+            name: intent.name,
+            userMessage:message,
+            entity: intent.entity || "UNKNOWN",
+            description:intent.description,
+            score:phraseScore,
             organisation_tokens: [],
             phrase_tokens: matchedTokens
-          };
+          }
         }
+
         score += phraseScore;
+        usedIndices.forEach(index => usedTokenIndices.add(index));
         matchedPhraseTokens = matchedTokens;
       }
 
       if (score > bestIntent.score) {
+        console.log(`NEW LEADER: ${intent.name}`, bestIntent);
+
         bestIntent = {
-          ...this.mapToBestIntent(intent, message, score),
+          id: intent.id,
+          name: intent.name,
+          userMessage:message,
+          description: intent.description,
+          entity:intent.entity || "UNKNOWN",
+          score,
           organisation_tokens: matchedOrganisationTokens,
           phrase_tokens: matchedPhraseTokens
         };
       }
+
     }
 
-    return bestIntent.score < this.SCORES.MIN_THRESHOLD
-      ? this.getInitialBestIntent()
-      : bestIntent;
-  }
+    const finalResult =
+      bestIntent.score < this.SCORES.MIN_THRESHOLD
+        ? this.getInitialBestIntent()
+        : bestIntent;
 
-  private mapToBestIntent(intent: IntentDefinition, message: string, score: number): BestIntent {
-    return {
-      id: intent.id,
-      name: intent.name,
-      userMessage: message,
-      description: intent.description,
-      entity: intent.entity || "UNKNOWN",
-      score,
-      organisation_tokens: [],
-      phrase_tokens: []
-    };
+    return finalResult;
   }
 
   private getInitialBestIntent(): BestIntent {
