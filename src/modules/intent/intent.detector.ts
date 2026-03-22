@@ -1,180 +1,211 @@
-import { Injectable, Inject } from '@nestjs/common';
-import natural from "natural";
-import { BestIntent, ReadOnlyIntentDefinition } from "../../types/intent.types";
-import { IntentGeminiService } from './intent.gemini';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import * as natural from "natural";
+import { BestIntent, IntentDefinition } from "../../types/intent.types";
+import { GeminiChatService } from "../gemini.service"; // Ensure correct export/path
+import { buildIntentPrompt } from "../../utils/build.prompt";
+import { addOrganisationToken } from "../../utils/json.utils";
 
-const getLevenshteinDistance = natural.LevenshteinDistance;
 const stemmer = natural.PorterStemmer.stem;
-
-// Define a token for the intents configuration
-export const INTENT_DEFINITIONS = 'INTENT_DEFINITIONS';
 
 @Injectable()
 export class IntentDetectorService {
+  // Configuration state
+  private intents: Array<IntentDefinition> = [];
+  private stopWords: Set<string> = new Set();
+
   private readonly SCORES = {
     EXACT_PHRASE: 10,
-    STRONG_TOKEN: 3,
-    WEAK_TOKEN: 1,
-    FUZZY_MATCH: 1.5,
-    MIN_THRESHOLD: 8,
+    MIN_THRESHOLD: 4,
     PARTIAL_PHRASE_MULTIPLIER: 0.5,
   };
 
-  private readonly STOP_WORDS = new Set([
-    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-    'could', 'should', 'may', 'might', 'can', 'i', 'you', 'it', 'for',
-    'my'
-  ]);
+  // Only inject other services here
+  constructor(private readonly geminiService: GeminiChatService) {}
 
-  constructor(
-    @Inject(INTENT_DEFINITIONS) private readonly intents: Array<ReadOnlyIntentDefinition>,
-    private readonly geminiService:IntentGeminiService
-  ) {}
+  /**
+   * Initialize the service with data (Call this in OnModuleInit or from a Controller)
+   */
+  public setup(intents: IntentDefinition[], stopWords: string[]) {
+    this.intents = intents;
+    this.stopWords = new Set(stopWords);
+  }
 
-  public async getFinalIntent(message: string): Promise<BestIntent>{
+  public async getFinalIntent(userMessage: string): Promise<BestIntent> {
     try {
+      let intent: BestIntent = this.processIntent(userMessage);
 
-      let intent = this.processIntent(message);
+      if (intent.name === "UNKNOWN") {
+        const prompt = buildIntentPrompt(userMessage);
+        intent = await this.geminiService.getLlmIntent(prompt);
 
-      if (intent.id === "UNKNOWN") {
-        intent = await this.geminiService.getIntent(message);
+        addOrganisationToken(intent.id, intent.userMessage);
       }
 
-      return intent
-    } catch(error) {
-      throw error;
+      return intent;
+    } catch (error) {
+      // NestJS prefers specific exception filters
+      throw new InternalServerErrorException(error.message);
     }
   }
 
-  /**
-   * Orchestrates the detection flow
-   */
-   public processIntent(message: string): BestIntent {
-       const { stemmedTokens, originalTokens } = this.tokenize(message);
+  private scoreTokensInverted(
+    usedTokenIndices: Set<number>,
+    phraseTokens: string[],
+    stemmedTokens: string[]
+  ) {
+    const messageIndex: Record<string, number[]> = {};
+    stemmedTokens.forEach((token, idx) => {
+      if (!messageIndex[token]) messageIndex[token] = [];
+      messageIndex[token].push(idx);
+    });
 
-       console.log(`\n🔍 [TOKENIZATION]`);
-       console.log(`   Original: [${originalTokens.join(', ')}]`);
-       console.log(`   Stemmed:  [${stemmedTokens.join(', ')}]`);
+    let currScore = 0;
+    const matchedTokens: string[] = [];
 
-       let bestIntent: BestIntent = this.getInitialBestIntent();
+    for (const phrase of phraseTokens) {
+      const phraseTokenized = this.tokenize(phrase).stemmedTokens;
+      if (phraseTokenized.length === 0 || matchedTokens.includes(phrase)) continue;
 
-       for (const intent of this.intents) {
-         let score = 0;
-         const usedTokenIndices = new Set<number>();
+      const potentialIndices: number[] = [];
+      let allWordsPresent = true;
 
-         const matchedStrongTokens: string[] = [];
-         const matchedFuzzyTokens: string[] = [];
-         const matchedWeakTokens: string[] = [];
-         const matchedPartialTokens: string[] = [];
+      for (const pToken of phraseTokenized) {
+        const occurrences = messageIndex[pToken];
+        const foundIdx = occurrences?.find(idx => !potentialIndices.includes(idx));
 
-         console.log(`\n--- 🛡️  Evaluating: ${intent.label} (${intent.id}) ---`);
+        if (foundIdx !== undefined) {
+          potentialIndices.push(foundIdx);
+        } else {
+          allWordsPresent = false;
+          break;
+        }
+      }
 
-         // --- 1. Phrase Matching ---
-         for (const phrase of intent.phrases) {
-           const phraseTokens = this.tokenize(phrase).stemmedTokens;
-           let intersectionTokens = 0;
+      if (allWordsPresent) {
+        potentialIndices.forEach(idx => usedTokenIndices.add(idx));
 
-           stemmedTokens.forEach((token, index) => {
-             if (phraseTokens.includes(token)) {
-               intersectionTokens++;
-               usedTokenIndices.add(index);
-             }
-           });
+        return {
+          matchedTokens: [phrase],
+          phraseScore: this.SCORES.EXACT_PHRASE,
+          usedIndices: usedTokenIndices,
+          isExactMatch: true
+        };
+      }
 
-           const matchRatio = intersectionTokens / phraseTokens.length;
+      const newlyMatchedIndices: number[] = [];
+      let intersectionCount = 0;
 
-           if (matchRatio === 1 && phraseTokens.length > 1) {
-             console.log(`   ✅ EXACT PHRASE MATCH: "${phrase}"`);
-             return {
-               id: intent.id,
-               label: intent.label,
-               score: this.SCORES.EXACT_PHRASE,
-               matchedPhrase: phrase,
-             };
-           } else if (matchRatio < 1 && matchRatio > 0 && phraseTokens.length > 2) {
-             const partialScore = this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
-             score += partialScore;
-             matchedPartialTokens.push(phrase);
-             console.log(`   🔸 Partial Phrase Match: "${phrase}" (+${partialScore.toFixed(2)})`);
-           }
-         }
+      for (const pToken of phraseTokenized) {
+        const occurrences = messageIndex[pToken];
+        const availableIdx = occurrences?.find(idx =>
+          !usedTokenIndices.has(idx) && !newlyMatchedIndices.includes(idx)
+        );
 
-         // --- 2. Strong Token Scoring ---
-         if (intent.strongTokens) {
-           for (const sToken of intent.strongTokens) {
-             const sTokenized = this.tokenizeSingleWord(sToken).stemmed;
+        if (availableIdx !== undefined) {
+          intersectionCount++;
+          newlyMatchedIndices.push(availableIdx);
+        }
+      }
 
-             for (let i = 0; i < stemmedTokens.length; i++) {
-               if (usedTokenIndices.has(i)) continue;
-               const userToken = stemmedTokens[i];
+      if (intersectionCount > 0) {
+        const matchRatio = intersectionCount / phraseTokenized.length;
+        const partialScore =
+          this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
 
-               if (userToken === sTokenized) {
-                 score += this.SCORES.STRONG_TOKEN;
-                 usedTokenIndices.add(i);
-                 matchedStrongTokens.push(userToken);
-                 console.log(`   💪 Strong Token Match: "${userToken}" (+${this.SCORES.STRONG_TOKEN})`);
-               } else {
-                 const distance = getLevenshteinDistance(sTokenized, userToken);
-                 if (distance <= 1) {
-                   score += this.SCORES.FUZZY_MATCH;
-                   usedTokenIndices.add(i);
-                   matchedFuzzyTokens.push(sToken);
-                   console.log(`   ☁️  Fuzzy Match: "${userToken}" ~ "${sToken}" (+${this.SCORES.FUZZY_MATCH})`);
-                 }
-               }
-             }
-           }
-         }
+        newlyMatchedIndices.forEach(idx => usedTokenIndices.add(idx));
+        currScore += partialScore;
+        matchedTokens.push(phrase);
+      }
+    }
 
-         // --- 3. Weak Token Scoring ---
-         if (intent.weakTokens) {
-           for (const wToken of intent.weakTokens) {
-             const wTokenized = this.tokenizeSingleWord(wToken).stemmed;
+    return {
+      matchedTokens,
+      phraseScore: currScore,
+      usedIndices: usedTokenIndices,
+      isExactMatch: false
+    };
+  }
 
-             for (let i = 0; i < stemmedTokens.length; i++) {
-               if (usedTokenIndices.has(i)) continue;
-               const userToken = stemmedTokens[i];
+  public processIntent(message: string): BestIntent {
+    const { stemmedTokens } = this.tokenize(message);
+    let bestIntent: BestIntent = this.getInitialBestIntent();
 
-               if (userToken === wTokenized) {
-                 score += this.SCORES.WEAK_TOKEN;
-                 usedTokenIndices.add(i);
-                 matchedWeakTokens.push(wToken);
-                 console.log(`   🌱 Weak Token Match: "${userToken}" (+${this.SCORES.WEAK_TOKEN})`);
-               }
-             }
-           }
-         }
+    for (const intent of this.intents) {
+      let score = 0;
+      const usedTokenIndices = new Set<number>();
+      let matchedOrganisationTokens: string[] = [];
+      let matchedPhraseTokens: string[] = [];
 
-         console.log(`   📊 Result: Score = ${score.toFixed(2)}`);
+      if (intent.organisation_tokens) {
+        const { matchedTokens, phraseScore, usedIndices, isExactMatch } =
+          this.scoreTokensInverted(usedTokenIndices, intent.organisation_tokens, stemmedTokens);
 
-         // --- 4. Update Best Intent ---
-         if (score > bestIntent.score) {
-           console.log(`   ⭐ NEW LEADER: ${intent.label}`);
-           bestIntent = {
-             id: intent.id,
-             label: intent.label,
-             score: score,
-             partialPhrases: matchedPartialTokens,
-             weakTokens: matchedWeakTokens,
-             strongTokens: matchedStrongTokens,
-             fuzzyTokens: matchedFuzzyTokens,
-           };
-         }
-       }
+        if (isExactMatch) {
+          return {
+            ...this.mapToBestIntent(intent, message, phraseScore),
+            organisation_tokens: matchedTokens,
+            phrase_tokens: []
+          };
+        }
+        score += phraseScore;
+        matchedOrganisationTokens = matchedTokens;
+      }
 
-       const finalResult = bestIntent.score < this.SCORES.MIN_THRESHOLD
-         ? this.getInitialBestIntent()
-         : bestIntent;
+      if (intent.phrase_tokens) {
+        const { matchedTokens, phraseScore, isExactMatch } =
+          this.scoreTokensInverted(usedTokenIndices, intent.phrase_tokens, stemmedTokens);
 
-       console.log(`\n🏆 [LOCAL_DETECTOR_FINAL]`);
-       console.log(`   Winner: ${finalResult.label} (Score: ${finalResult.score.toFixed(2)})`);
-       console.log(`---------------------------------------------\n`);
+        if (isExactMatch) {
+          return {
+            ...this.mapToBestIntent(intent, message, phraseScore),
+            organisation_tokens: [],
+            phrase_tokens: matchedTokens
+          };
+        }
+        score += phraseScore;
+        matchedPhraseTokens = matchedTokens;
+      }
 
-       return finalResult;
-     }
+      if (score > bestIntent.score) {
+        bestIntent = {
+          ...this.mapToBestIntent(intent, message, score),
+          organisation_tokens: matchedOrganisationTokens,
+          phrase_tokens: matchedPhraseTokens
+        };
+      }
+    }
 
-  // --- Internal NLP Logic ---
+    return bestIntent.score < this.SCORES.MIN_THRESHOLD
+      ? this.getInitialBestIntent()
+      : bestIntent;
+  }
+
+  // Helper to keep code DRY
+  private mapToBestIntent(intent: IntentDefinition, message: string, score: number): BestIntent {
+    return {
+      id: intent.id,
+      name: intent.name,
+      userMessage: message,
+      description: intent.description,
+      entity: intent.entity || "UNKNOWN",
+      score,
+      organisation_tokens: [],
+      phrase_tokens: []
+    };
+  }
+
+  private getInitialBestIntent(): BestIntent {
+    return {
+      id: 0,
+      name: "UNKNOWN",
+      description: "UNKNOWN",
+      userMessage: "UNKNOWN",
+      entity: "UNKNOWN",
+      score: 0,
+      organisation_tokens: [],
+      phrase_tokens: []
+    };
+  }
 
   private tokenize(text: string) {
     const cleanText = text.toLocaleLowerCase()
@@ -182,47 +213,15 @@ export class IntentDetectorService {
       .split(/\s+/)
       .filter(Boolean);
 
-    // Remove duplicates while keeping order
     const originalTokens: string[] = Array.from(new Set(cleanText));
-
     const stemmedTokens: string[] = Array.from(
       new Set(
         originalTokens
-          .filter(t => !this.STOP_WORDS.has(t))
+          .filter(t => !this.stopWords.has(t))
           .map(t => stemmer(t))
       )
     );
 
     return { originalTokens, stemmedTokens };
-  }
-
-  private tokenizeSingleWord(text: string) {
-    const cleanTokens = text.toLocaleLowerCase()
-      .replace(/[^a-z0-9\s]/g, " ")
-      .split(/\s+/)
-      .filter(Boolean);
-
-    if (cleanTokens.length === 0) {
-      return { original: text, stemmed: '', isStopWord: false };
-    }
-
-    const originalWord = cleanTokens[0];
-    const isStopWord = this.STOP_WORDS.has(originalWord);
-    const stemmedWord = !isStopWord ? stemmer(originalWord) : '';
-
-    return { original: originalWord, stemmed: stemmedWord, isStopWord };
-  }
-
-  private getInitialBestIntent(): BestIntent {
-    return {
-      id: "UNKNOWN",
-      label: "UNKNOWN",
-      score: 0,
-      matchedPhrase: "UNKNOWN",
-      partialPhrases: [],
-      weakTokens: [],
-      strongTokens: [],
-      fuzzyTokens: [],
-    };
   }
 }

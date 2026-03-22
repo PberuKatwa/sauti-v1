@@ -1,14 +1,15 @@
 import { z } from "zod";
 
 export const BestIntentSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  score: z.number(),
+  id: z.number().int(),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  userMessage: z.string(),
+  entity: z.string().min(1),
+  score: z.number().min(0).max(1),
 
-  matchedPhrase: z.string().optional(),
-
-  partialPhrases: z.array(z.string()).optional(),
-  weakTokens: z.array(z.string()).optional(),
-  strongTokens: z.array(z.string()).optional(),
-  fuzzyTokens: z.array(z.string()).optional(),
+  phrase_tokens: z.array(z.string()).optional(),
+  organisation_tokens: z.array(z.string()).optional(),
 });
+
+export type BestIntent = z.infer<typeof BestIntentSchema>;
