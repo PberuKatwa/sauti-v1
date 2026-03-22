@@ -50,23 +50,23 @@ export class WhatsappReplyService extends WhatsappService{
   async processMessage(intent: BestIntent, recipient:string, userMessage:string) {
     try {
 
-      if( intent.id === "GREETING" ){
+      if( intent.name === "GREETING" ){
         await this.sendTemplate("welcome_actions", "en", recipient);
       }
 
-      else if( intent.id === "HELP" ){
+      else if( intent.name === "HELP" ){
         await this.sendHelpMenu(recipient);
       }
 
-      else if( intent.id === "COMPLAINT" ){
+      else if( intent.name === "COMPLAINT" ){
         await this.sendComplaintEscalation(recipient);
       }
 
-      else if (intent.id === "REQUEST_CATALOGUE") {
+      else if (intent.name === "REQUEST_CATALOGUE") {
         await this.sendFlowerCatalog(recipient);
       }
 
-      else if (intent.id === "CREATE_ORDER") {
+      else if (intent.name === "CREATE_ORDER") {
 
         const client = await this.clientService.createClient({ phoneNumber: parseInt(recipient) });
 
@@ -89,7 +89,7 @@ export class WhatsappReplyService extends WhatsappService{
 
       }
 
-      else if (intent.id === "FETCH_ALL_ORDERS") {
+      else if (intent.name === "FETCH_ALL_ORDERS") {
 
         const client = await this.clientService.fetchClientByPhone(parseInt(recipient));
         const orders = await this.ordersService.fetchClientOrders(client.id);
@@ -97,7 +97,7 @@ export class WhatsappReplyService extends WhatsappService{
 
       }
 
-      else if (intent.id === "FETCH_SINGLE_ORDER") {
+      else if (intent.name === "FETCH_SINGLE_ORDER") {
 
         const match = userMessage.match(/ORDER_ID:(\d+)/);
         const orderId = match ? Number(match[1]) : null;
@@ -114,16 +114,16 @@ export class WhatsappReplyService extends WhatsappService{
 
       }
 
-      else if (intent.id === "TRACK_ORDER") {
+      else if (intent.name === "TRACK_ORDER") {
 
         await this.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
 
       }
-      else if (intent.id === "PAY_FOR_ORDER") {
+      else if (intent.name === "PAY_FOR_ORDER") {
 
         await this.sendText(`How can I help you with payment? Are you checking options or need help with a transaction?`, recipient )
 
-      }else if( intent.id === "UNKNOWN" ){
+      }else if( intent.name === "UNKNOWN" ){
 
         await this.sendHelpMenu(recipient);
 

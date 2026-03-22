@@ -1,36 +1,46 @@
-import { InternalServerErrorException, Logger } from '@nestjs/common';
-import * as fs from 'fs';
+import fs from "fs";
 import { IntentFileSchema } from "../validators/intent.schema";
 import { IntentDefinition } from "../types/intent.types";
-import { logger } from '../logger/winston.logger';
-
+import { logger } from "../logger/winston.logger";
 
 function normalizeArray(arr: string[]): string[] {
   return [...new Set(arr.map(v => v.trim().toLowerCase()))];
 }
 
-export function loadIntentsFromFile(filePath: string): IntentDefinition[] {
-  try {
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Intent File path does not exist: ${filePath}`);
-    }
+export function loadIntentsFromFile(filePath:string):IntentDefinition[]{
+  try{
 
-    const rawJson = fs.readFileSync(filePath, "utf-8");
-    const json = JSON.parse(rawJson);
+    if( !fs.existsSync( filePath ) ) throw new Error(`Intent File path doesnt exist`);
+    if( !fs.statSync(filePath).isFile() ) throw new Error(`File path exists but no file was found`)
 
-    const parsed = IntentFileSchema.parse(json);
-    logger.info(`Successfully loaded ${parsed.intents.length} intents from file`);
+    const rawJson = fs.readFileSync( filePath, "utf-8" )
+    const json = JSON.parse(rawJson)
 
-    return parsed.intents.map(intent => ({
-      id: intent.id,
-      label: intent.label,
-      phrases: normalizeArray(intent.phrases),
-      strongTokens: normalizeArray(intent.strongTokens || []),
-      weakTokens: normalizeArray(intent.weakTokens || [])
-    }));
+    const parsed = IntentFileSchema.parse(json)
+    logger.info(`Successfully parsed file`)
 
-  } catch (error) {
-    logger.error(`Error in loading intents file`, error);
-    throw new InternalServerErrorException(error.message);
+    const validatedOutput = parsed.map(
+      function(intent){
+
+        const fileOutput:IntentDefinition = {
+          id: intent.id,
+          organization_type: intent.organization_type,
+          description: intent.description,
+          entity: intent.entity,
+          category:intent.category,
+          name: intent.name,
+          organisation_tokens:normalizeArray(intent.organisation_tokens),
+          phrase_tokens:normalizeArray(intent.phrase_tokens)
+        }
+
+        return fileOutput
+      }
+    )
+
+
+    return validatedOutput
+
+  }catch(error){
+    throw error;
   }
 }
