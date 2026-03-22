@@ -244,6 +244,7 @@
     "entity": "Orders",
     "category": "General",
     "organisation_tokens": [
+      "Naeza nunua maua",
       "Can I order a dozen roses",
       "I would like to order a bouquet of red roses",
       "Place an order for the birthday special arrangement",
@@ -355,6 +356,7 @@
     "entity": "Payments",
     "category": "General",
     "organisation_tokens": [
+      "Naeza lipia my last order",
       "pay for order OrderId:17",
       "I am ready to pay for my flower order",
       "How do I pay for my bouquet delivery?",
