@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as natural from "natural";
 import { BestIntent, IntentDefinition } from "../../types/intent.types";
-import { IntentGeminiService } from "./intent.gemini"; // Ensure correct export/path
+import { IntentGeminiService } from "./intent.gemini";
 import { buildIntentPrompt } from "../../utils/intent.prompt";
 import { addOrganisationToken } from "../../utils/json.utils";
 
@@ -9,7 +9,6 @@ const stemmer = natural.PorterStemmer.stem;
 
 @Injectable()
 export class IntentDetectorService {
-  // Configuration state
   private intents: Array<IntentDefinition> = [];
   private stopWords: Set<string> = new Set();
 
@@ -19,12 +18,8 @@ export class IntentDetectorService {
     PARTIAL_PHRASE_MULTIPLIER: 0.5,
   };
 
-  // Only inject other services here
   constructor(private readonly geminiService: IntentGeminiService) {}
 
-  /**
-   * Initialize the service with data (Call this in OnModuleInit or from a Controller)
-   */
   public setup(intents: IntentDefinition[], stopWords: string[]) {
     this.intents = intents;
     this.stopWords = new Set(stopWords);
@@ -43,8 +38,7 @@ export class IntentDetectorService {
 
       return intent;
     } catch (error) {
-      // NestJS prefers specific exception filters
-      throw new InternalServerErrorException(error.message);
+      throw error
     }
   }
 
@@ -180,7 +174,6 @@ export class IntentDetectorService {
       : bestIntent;
   }
 
-  // Helper to keep code DRY
   private mapToBestIntent(intent: IntentDefinition, message: string, score: number): BestIntent {
     return {
       id: intent.id,

@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import path from 'path';
-import { IntentDetectorService, INTENT_DEFINITIONS } from './intent.detector';
+import { IntentDetectorService } from './intent.detector';
 import { loadIntentsFromFile } from '../../utils/intentLoader';
 import { IntentGeminiService } from "./intent.gemini";
 import { AppLogger } from "../../logger/winston.logger";
@@ -9,17 +9,7 @@ import { APP_LOGGER } from "../../logger/logger.provider";
 
 @Module({
   providers: [
-    {
-      provide: IntentDetectorService,
-      useFactory: function (geminiService:IntentGeminiService) {
-
-        const filePath = path.join(process.cwd(), 'src/modules/intent/data/intent1.json');
-        const intents = loadIntentsFromFile(filePath);
-
-        return new IntentDetectorService(intents, geminiService);
-      },
-      inject:[IntentGeminiService]
-    },
+    IntentDetectorService,
     {
       provide: IntentGeminiService,
       useFactory: function (
