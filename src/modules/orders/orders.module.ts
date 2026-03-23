@@ -8,6 +8,6 @@ import { OrdersHandler } from "./orders.handler";
   imports: [WhatsappModule],
   providers:[OrdersModel, OrdersHandler],
   controllers:[OrdersController],
-  exports:[OrdersModel, OrdersHandler]
+  exports: [OrdersModel, OrdersHandler]
 })
 export class OrdersModule { };
