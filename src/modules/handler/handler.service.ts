@@ -7,6 +7,10 @@ import { WhatsappReply } from "../../types/reply.types";
 import { IntentDetectorService } from "../intent/intent.detector";
 import { BestIntent } from "../../types/intent.types";
 import { loadIntentsFromFile } from "../../utils/intentLoader";
+import { ProductsHandler } from "../products/products.handler";
+import { OrdersHandler } from "../orders/orders.handler";
+import { CustomerCareHandler } from "../customerCare/care.handler";
+import { PaymentsHandler } from "../payments/payments.handler";
 
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
@@ -19,7 +23,11 @@ export class HandlerService{
 
   constructor(
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
-    private readonly intentDetector: IntentDetectorService
+    private readonly intentDetector: IntentDetectorService,
+    private readonly productsHandler: ProductsHandler,
+    private readonly ordersHandler: OrdersHandler,
+    private readonly customerCareHandler: CustomerCareHandler,
+    private readonly paymentsHandler:PaymentsHandler
   ) { };
 
   private extractWhatsappWebhookType(webhook: WhatsappWebhook): {
