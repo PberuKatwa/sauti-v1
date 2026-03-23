@@ -129,6 +129,7 @@ export class HandlerService{
       try {
         await handler(intentResult, recipient);
       } catch (error) {
+        this.logger.error(`Error in processing message to handler ${error}`)
         await this.customerCareHandler.sendHelpMenu(recipient);
       }
 

@@ -66,9 +66,9 @@ export class WhatsappController{
 
       const { type, recipient, intent, userMessage } = await this.handlerService.processWhatsappWebhook(body);
 
-      if (type === "MESSAGE") {
-        await this.whatsappReplyService.processMessage(intent, recipient, userMessage);
-      }
+      // if (type === "MESSAGE") {
+      //   await this.whatsappReplyService.processMessage(intent, recipient, userMessage);
+      // }
 
       return res.status(200).json({
         success: true,

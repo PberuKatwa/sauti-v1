@@ -90,7 +90,7 @@ export class OrdersHandler{
     await this.whatsappService.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
   }
 
-  async sendOrderInvoice(recipient: string, order: any) {
+  private async sendOrderInvoice(recipient: string, order: any) {
 
     const itemSummary = order.items
       .map((item: any) => `• ${item.name} (x${item.quantity})`)
@@ -143,7 +143,7 @@ export class OrdersHandler{
     await this.whatsappService.callApi(recipient, payload);
   }
 
-  async sendOrdersList(recipient:string,orders:OrderProfile[]) {
+  private async sendOrdersList(recipient:string,orders:OrderProfile[]) {
 
     const limitedOrders = orders.slice(0, 5);
 
