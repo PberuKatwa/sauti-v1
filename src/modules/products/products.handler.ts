@@ -123,4 +123,42 @@ export class ProductsHandler{
 
   }
 
+  async sendFlowerCatalog(itemsList: (OrderItem & { imageUrl: string, description: string, productId:number })[] , recipient: string) {
+
+    for (const flower of itemsList) {
+      const payload = {
+        messaging_product: "whatsapp",
+        to: recipient,
+        type: "interactive",
+        interactive: {
+          type: "button",
+          header: {
+            type: "image",
+            image: { link: flower.imageUrl }
+          },
+          body: {
+            // Use Markdown (Bolding) to make the name and price stand out
+            text: `*${flower.name}*\n\n${flower.description}\n\n*Price:* KES ${flower.unitPrice.toLocaleString()}`
+          },
+          footer: {
+            text: "Purple Hearts 💜 - Tap 'Order' to start"
+          },
+          action: {
+            buttons: [
+              {
+                type: "reply",
+                reply: {
+                  id: `generate an invoice exact -ProductID:${flower.productId}`,
+                  title: "Order Now 🛍️"
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      await this.whatsappService.callApi(recipient, payload);
+    }
+  }
+
 };
