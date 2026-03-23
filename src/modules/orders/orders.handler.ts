@@ -21,7 +21,7 @@ export class OrdersHandler{
   private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
     'CREATE_ORDER': (msg,recipient) => this.handleCreateOrder(msg,recipient),
     'GET_ALL_ORDERS': (msg, recipient) => this.handleGetAllOrders(msg, recipient),
-    'GET_ORDER': (msg,recipient) => this.handleGetAllOrders(msg,recipient)
+    'GET_ORDER': (msg,recipient) => this.handleGetOrder(msg,recipient)
 
   };
 
@@ -67,6 +67,22 @@ export class OrdersHandler{
     const client = await this.clientsModel.fetchClientByPhone(parseInt(recipient));
     const orders = await this.ordersModel.fetchClientOrders(client.id);
     await this.sendOrdersList(recipient, orders);
+  }
+
+  private async handleGetOrder(userMessage: string, recipient: string) {
+
+    const match = userMessage.match(/ORDER_ID:(\d+)/);
+    const orderId = match ? Number(match[1]) : null;
+
+    let currentOrder = null;
+    if (orderId) {
+      currentOrder = await this.ordersModel.fetchOrder(orderId);
+    } else {
+      const client = await this.clientsModel.fetchClientByPhone(parseInt(recipient));
+      currentOrder = await this.ordersModel.fetchLatestOrderByClient(client.id)
+    }
+
+    await this.sendOrderInvoice(recipient, currentOrder);
   }
 
   async sendOrderInvoice(recipient: string, order: any) {
