@@ -6,6 +6,7 @@ import { OrdersModel } from "./orders.model";
 import { BestIntent } from "../../validators/bestIntent.schema";
 import { ClientModel } from "../client/client.model";
 import { ProductsHandler, catalog } from "../products/products.handler";
+import { OrderProfile } from "../../types/orders.types";
 
 export class OrdersHandler{
 
@@ -19,7 +20,9 @@ export class OrdersHandler{
 
   private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
     'CREATE_ORDER': (msg,recipient) => this.handleCreateOrder(msg,recipient),
-    'GET_PRODUCT': (msg,recipient) => this.handleGetProduct(msg,recipient)
+    'GET_ALL_ORDERS': (msg, recipient) => this.handleGetAllOrders(msg, recipient),
+    'GET_ORDER': (msg,recipient) => this.handleGetAllOrders(msg,recipient)
+
   };
 
   public async handleIntent(intent: BestIntent, recipient:string):Promise<void> {
@@ -59,11 +62,15 @@ export class OrdersHandler{
     await this.sendOrderInvoice(recipient, orderCreated)
   }
 
-  private async handleGetProduct(userMessage: string, recipient:string) {
-    await this.whatsappService.sendText(`WERE AT GET_PRODUCT`, recipient);
+  private async handleGetAllOrders(userMessage: string, recipient: string) {
+
+    const client = await this.clientsModel.fetchClientByPhone(parseInt(recipient));
+    const orders = await this.ordersModel.fetchClientOrders(client.id);
+    await this.sendOrdersList(recipient, orders);
   }
 
   async sendOrderInvoice(recipient: string, order: any) {
+
     const itemSummary = order.items
       .map((item: any) => `• ${item.name} (x${item.quantity})`)
       .join('\n');
@@ -106,6 +113,60 @@ export class OrdersHandler{
                 id: `track order location - OrderId:${order.id}`,
                 title: "Track Order Location"
               }
+            }
+          ]
+        }
+      }
+    };
+
+    await this.whatsappService.callApi(recipient, payload);
+  }
+
+  async sendOrdersList(recipient:string,orders:OrderProfile[]) {
+
+    const limitedOrders = orders.slice(0, 5);
+
+    const rows = limitedOrders.map(order => {
+      const itemsSummary = order.items
+        .slice(0, 2)
+        .map(item => `${item.name} x${item.quantity}`)
+        .join(", ");
+
+      const moreItems =
+        order.items.length > 2 ? ` +${order.items.length - 2} more` : "";
+
+      return {
+        id: `retrieve order info - ORDER_ID:${order.id}`,
+        title: `🧾 ${order.invoice_number}`,
+        description:
+          `${itemsSummary}${moreItems}\n` +
+          `KES ${Number(order.total).toLocaleString()} • ` +
+          `${order.status.toUpperCase()} • ${order.payment_status.toUpperCase()}`
+      };
+    });
+
+    const payload = {
+      messaging_product: "whatsapp",
+      to: recipient,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        header: {
+          type: "text",
+          text: "📦 Your Recent Orders"
+        },
+        body: {
+          text: "Here are your latest orders. Tap one to view details 👇"
+        },
+        footer: {
+          text: "Purple Hearts 💜"
+        },
+        action: {
+          button: "View Orders",
+          sections: [
+            {
+              title: "Recent Orders",
+              rows
             }
           ]
         }
