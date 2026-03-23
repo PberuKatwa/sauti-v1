@@ -2,6 +2,7 @@ import { Inject } from "@nestjs/common";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
 import { WhatsappService } from "../whatsapp/whatsapp.service";
+import { BestIntent } from "../../validators/bestIntent.schema";
 
 export class PaymentsHandler{
 
@@ -10,5 +11,29 @@ export class PaymentsHandler{
     private readonly whatsappService:WhatsappService
   ) { };
 
+  private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
+    'GET_ALL_PAYMENTS': (msg,recipient) => this.handleGetAllPayments(msg,recipient),
+    'GET_PRODUCT': (msg,recipient) => this.handleGetProduct(msg,recipient)
+  };
 
+  public async handleIntent(intent: BestIntent, recipient:string):Promise<void> {
+    try {
+
+      const handler = this.intentMap[intent.name];
+
+      if (!handler) throw new Error(`No handler was found`)
+
+      return handler(intent.userMessage, recipient);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async handleGetAllPayments(userMessage: string, recipient:string) {
+
+  }
+
+  private async handleGetProduct(userMessage: string, recipient:string) {
+    await this.whatsappService.sendText(`WERE AT GET_PRODUCT`, recipient);
+  }
 }
