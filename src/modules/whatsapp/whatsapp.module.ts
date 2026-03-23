@@ -25,21 +25,21 @@ import { OrdersModel } from "../orders/orders.model";
       },
       inject:[APP_LOGGER,ConfigService]
     },
-    {
-      provide: WhatsappReplyService,
-      useFactory: function (
-        logger: AppLogger,
-        config: ConfigService,
-        clientService: ClientModel,
-        ordersService: OrdersModel
-      ) {
-        const token = config.get<string>('whatsappAccessToken');
-        const phoneNumberId = config.get<string>('phoneNumberId');
+    // {
+    //   provide: WhatsappReplyService,
+    //   useFactory: function (
+    //     logger: AppLogger,
+    //     config: ConfigService,
+    //     clientService: ClientModel,
+    //     ordersService: OrdersModel
+    //   ) {
+    //     const token = config.get<string>('whatsappAccessToken');
+    //     const phoneNumberId = config.get<string>('phoneNumberId');
 
-        return new WhatsappReplyService(logger, token, phoneNumberId, clientService, ordersService);
-      },
-      inject: [APP_LOGGER, ConfigService, ClientModel, OrdersModel]
-    },
+    //     return new WhatsappReplyService(logger, token, phoneNumberId, clientService, ordersService);
+    //   },
+    //   inject: [APP_LOGGER, ConfigService, ClientModel, OrdersModel]
+    // },
   ],
   exports:[WhatsappService]
 })

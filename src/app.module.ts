@@ -9,6 +9,8 @@ import { FilesModule } from './modules/files/files.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClientModule } from './modules/client/client.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { CustomerCareModule } from './modules/customerCare/care.module';
+import { ProductsModule } from './modules/products/products.module';
 
 
 @Module({
@@ -24,7 +26,9 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
     PostgresModule,
     UsersModule,
     ClientModule,
-    WhatsappModule
+    WhatsappModule,
+    CustomerCareModule,
+    ProductsModule
   ]
 })
 export class AppModule implements NestModule{

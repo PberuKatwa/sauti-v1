@@ -2,17 +2,16 @@ import { Controller, Get, Inject, Req, Res, Post } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { APP_LOGGER } from "../../logger/logger.provider";
 import { AppLogger } from "../../logger/winston.logger";
-import { WhatsappService } from "./whatsapp.service";
+import { WhatsappService } from "../whatsapp/whatsapp.service";
 import { ConfigService } from "@nestjs/config";
 import { ApiResponse } from "../../types/api.types";
 import { WhatsappWebhook } from "../../types/whatsapp.webhook";
 import { HandlerService } from "../handler/handler.service";
-import { WhatsappReplyService } from "./whatsapp.reply";
+import { WhatsappReplyService } from "../whatsapp/whatsapp.reply";
 import { ClientModel } from "../client/client.model";
 import { OrdersModel } from "../orders/orders.model";
 
-// @Controller('whatsapp')
-@Controller('old/whatsapp')
+@Controller('whatsapp')
 export class WhatsappController{
 
   constructor(
