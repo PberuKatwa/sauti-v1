@@ -21,8 +21,8 @@ export class OrdersHandler{
   private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
     'CREATE_ORDER': (msg,recipient) => this.handleCreateOrder(msg,recipient),
     'GET_ALL_ORDERS': (msg, recipient) => this.handleGetAllOrders(msg, recipient),
-    'GET_ORDER': (msg,recipient) => this.handleGetOrder(msg,recipient)
-
+    'GET_ORDER': (msg, recipient) => this.handleGetOrder(msg, recipient),
+    'GET_ORDER_STATUS': (msg,recipient) => this.handleGetOrderStatus(msg,recipient)
   };
 
   public async handleIntent(intent: BestIntent, recipient:string):Promise<void> {
@@ -83,6 +83,11 @@ export class OrdersHandler{
     }
 
     await this.sendOrderInvoice(recipient, currentOrder);
+  }
+
+  private async handleGetOrderStatus(userMessage: string, recipient: string) {
+
+    await this.whatsappService.sendText(`I can check your order status. Please share your order number or tracking ID.`, recipient)
   }
 
   async sendOrderInvoice(recipient: string, order: any) {
