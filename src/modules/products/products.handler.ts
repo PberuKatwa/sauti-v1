@@ -11,7 +11,7 @@ interface CatalogItem extends OrderItem {
   productId: number;
 }
 
-const catalog: CatalogItem[] = [
+export const catalog: CatalogItem[] = [
   {
     productId: 1,
     name: "Red Rose Bouquet",
