@@ -12,7 +12,7 @@ export class CustomerCareHandler{
   ) { };
 
   private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
-    'GREETING': (msg,recipient) => this.handleCreateOrder(msg,recipient),
+    'GREETING': (msg,recipient) => this.handleGreeting(msg,recipient),
     'GET_ALL_ORDERS': (msg, recipient) => this.handleGetAllOrders(msg, recipient),
     'GET_ORDER': (msg, recipient) => this.handleGetOrder(msg, recipient)
   };
@@ -43,6 +43,16 @@ export class CustomerCareHandler{
 
   private async handleGreeting(userMessage: string, recipient: string) {
     await this.whatsappService.sendTemplate("welcome_actions", "en", recipient);
+  }
+
+  private async handleComplaint(userMessage: string, recipient: string) {
+
+    await this.sendComplaintEscalation(recipient);
+  }
+
+  private async handleHelp(userMessage: string, recipient: string) {
+
+    await this.sendHelpMenu(recipient);
   }
 
   async sendHelpMenu(recipient: string) {
