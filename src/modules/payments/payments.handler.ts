@@ -11,7 +11,8 @@ export class PaymentsHandler{
     private readonly whatsappService:WhatsappService
   ) { };
 
-  private readonly intentMap: Record< string, (msg: string, recipient:string) => Promise<any> > = {
+  private readonly intentMap: Record<string, (msg: string, recipient: string) => Promise<any>> = {
+    'CREATE_PAYMENT': (msg,recipient) => this.createPayment(msg,recipient),
     'GET_ALL_PAYMENTS': (msg,recipient) => this.handleGetAllPayments(msg,recipient),
     'GET_PAYMENT': (msg,recipient) => this.handleGetPayment(msg,recipient)
   };
@@ -28,6 +29,11 @@ export class PaymentsHandler{
       throw error;
     }
   }
+
+  private async createPayment(userMessage: string, recipient:string) {
+    await this.whatsappService.sendText(`CREATE_PAYMENT .......`, recipient )
+  }
+
 
   private async handleGetAllPayments(userMessage: string, recipient:string) {
     await this.whatsappService.sendText(`GET_ALL_PAYMENTS`, recipient )

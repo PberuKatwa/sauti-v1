@@ -44,96 +44,112 @@ export class IntentDetectorService {
   }
 
   private scoreTokensInverted(
-    usedTokenIndices: Set<number>,
-    phraseTokens: string[],
-    stemmedTokens: string[]
-  ): {
-    matchedTokens: string[],
-    phraseScore: number,
-    usedIndices: Set<number>,
-    isExactMatch: boolean
-  } {
+      usedTokenIndices: Set<number>,
+      phraseTokens: string[],
+      stemmedTokens: string[]
+    ): {
+      matchedTokens: string[],
+      phraseScore: number,
+      usedIndices: Set<number>,
+      isExactMatch: boolean
+    } {
+      console.log('--- STARTING SCORE ---');
+      console.log('Input Message Tokens:', stemmedTokens);
 
-    const messageIndex: Record<string, number[]> = {};
-    stemmedTokens.forEach((token, idx) => {
-      if (!messageIndex[token]) messageIndex[token] = [];
-      messageIndex[token].push(idx);
-    });
+      const messageIndex: Record<string, number[]> = {};
+      stemmedTokens.forEach((token, idx) => {
+        if (!messageIndex[token]) messageIndex[token] = [];
+        messageIndex[token].push(idx);
+      });
 
-    let currScore = 0;
-    const matchedTokens: string[] = [];
+      let currScore = 0;
+      const matchedTokens: string[] = [];
 
-    for (const phrase of phraseTokens) {
-      const phraseTokenized = this.tokenize(phrase).stemmedTokens;
-      if (phraseTokenized.length === 0 || matchedTokens.includes(phrase)) continue;
+      for (const phrase of phraseTokens) {
+        const phraseTokenized = this.tokenize(phrase).stemmedTokens;
+        if (phraseTokenized.length === 0 || matchedTokens.includes(phrase)) continue;
 
-      const potentialIndices: number[] = [];
-      let allWordsPresent = true;
+        console.log(`PHRASEEEEEE`, phraseTokenized)
+        const potentialIndices: number[] = [];
+        let allWordsPresent = true;
 
-      for (const pToken of phraseTokenized) {
-        const occurrences = messageIndex[pToken];
-        const foundIdx = occurrences?.find(idx => !potentialIndices.includes(idx));
+        for (const pToken of phraseTokenized) {
+          const occurrences = messageIndex[pToken];
+          const foundIdx = occurrences?.find(idx => !potentialIndices.includes(idx));
 
-        if (foundIdx !== undefined) {
-          potentialIndices.push(foundIdx);
-        } else {
-          allWordsPresent = false;
-          break;
+          if (foundIdx !== undefined) {
+            potentialIndices.push(foundIdx);
+          } else {
+            allWordsPresent = false;
+            break;
+          }
+        }
+
+        if (allWordsPresent) {
+          potentialIndices.forEach(idx => usedTokenIndices.add(idx));
+
+          console.log(`✅ [EXACT MATCH] Phrase: "${phrase}" | Awarding: ${this.SCORES.EXACT_PHRASE}`);
+
+          return {
+            matchedTokens: [phrase],
+            phraseScore: this.SCORES.EXACT_PHRASE,
+            usedIndices: usedTokenIndices,
+            isExactMatch: true
+          };
+        }
+
+        const newlyMatchedIndices: number[] = [];
+        let intersectionCount = 0;
+
+        for (const pToken of phraseTokenized) {
+          const occurrences = messageIndex[pToken];
+
+          const availableIdx = occurrences?.find(idx =>
+            !usedTokenIndices.has(idx) && !newlyMatchedIndices.includes(idx)
+          );
+
+          if (availableIdx !== undefined) {
+            intersectionCount++;
+            newlyMatchedIndices.push(availableIdx);
+          }
+        }
+
+        if (intersectionCount > 0) {
+          const matchRatio = intersectionCount / phraseTokenized.length;
+          const partialScore =
+            this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
+
+          console.log(`⚠️  [PARTIAL MATCH] Phrase: "${phrase}"`);
+          console.log(`   - Intersection: ${intersectionCount}/${phraseTokenized.length}`);
+          console.log(`   - Points Added: ${partialScore.toFixed(2)}`);
+
+          newlyMatchedIndices.forEach(idx => usedTokenIndices.add(idx));
+          currScore += partialScore;
+          matchedTokens.push(phrase);
         }
       }
 
-      if (allWordsPresent) {
-        potentialIndices.forEach(idx => usedTokenIndices.add(idx));
+      console.log(`🏁 [FINAL RESULT] Total Score: ${currScore} | Tokens: [${matchedTokens}]`);
+      console.log('--- END SCORE ---');
 
-        return {
-          matchedTokens: [phrase],
-          phraseScore: this.SCORES.EXACT_PHRASE,
-          usedIndices: usedTokenIndices,
-          isExactMatch: true
-        };
-      }
-
-      const newlyMatchedIndices: number[] = [];
-      let intersectionCount = 0;
-
-      for (const pToken of phraseTokenized) {
-        const occurrences = messageIndex[pToken];
-
-        const availableIdx = occurrences?.find(idx =>
-          !usedTokenIndices.has(idx) && !newlyMatchedIndices.includes(idx)
-        );
-
-        if (availableIdx !== undefined) {
-          intersectionCount++;
-          newlyMatchedIndices.push(availableIdx);
-        }
-      }
-
-      if (intersectionCount > 0) {
-        const matchRatio = intersectionCount / phraseTokenized.length;
-        const partialScore =
-          this.SCORES.EXACT_PHRASE * matchRatio * this.SCORES.PARTIAL_PHRASE_MULTIPLIER;
-
-        newlyMatchedIndices.forEach(idx => usedTokenIndices.add(idx));
-        currScore += partialScore;
-        matchedTokens.push(phrase);
-      }
+      return {
+        matchedTokens,
+        phraseScore: currScore,
+        usedIndices: usedTokenIndices,
+        isExactMatch: false
+      };
     }
-
-    return {
-      matchedTokens,
-      phraseScore: currScore,
-      usedIndices: usedTokenIndices,
-      isExactMatch: false
-    };
-
-  }
 
   /**
    * Main detection entry point
    */
   public processIntent(message: string): BestIntent {
     const { stemmedTokens, originalTokens } = this.tokenize(message);
+
+    console.log("stemmedTokens", stemmedTokens);
+    console.log("stemmedTokens", stemmedTokens);
+    console.log("stemmedTokens", stemmedTokens);
+
 
     let bestIntent: BestIntent = this.getInitialBestIntent();
 
@@ -145,13 +161,17 @@ export class IntentDetectorService {
       let matchedOrganisationTokens: string[] = [];
       let matchedPhraseTokens: string[] = [];
 
+      console.log(`CURRENT INTENTTTTTT`, intent.name)
+      console.log(`CURRENT INTENTTTTTT`, intent.name)
+      console.log(`CURRENT INTENTTTTTT`, intent.name)
+
       // Organisation Token Matching
       if (intent.organisation_tokens) {
 
         const { matchedTokens, phraseScore, usedIndices, isExactMatch } =
           this.scoreTokensInverted(usedTokenIndices,intent.organisation_tokens, stemmedTokens);
 
-        // console.log("founddddd organisationnn", matchedTokens, phraseScore, usedIndices, isExactMatch)
+        console.log("founddddd organisationnn", matchedTokens, phraseScore, usedIndices, isExactMatch)
 
         if (isExactMatch) {
           return {
@@ -236,10 +256,13 @@ export class IntentDetectorService {
   }
 
   private tokenize(text: string) {
-    const doc = nlp(text);
+    const cleanText = text.toLocaleLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
 
-    const normalizedWords = doc.normalize().out('array');
-    const originalTokens: string[] = Array.from(new Set(normalizedWords));
+    // Remove duplicates while keeping order
+    const originalTokens: string[] = Array.from(new Set(cleanText));
 
     const stemmedTokens: string[] = Array.from(
       new Set(
@@ -251,4 +274,6 @@ export class IntentDetectorService {
 
     return { originalTokens, stemmedTokens };
   }
+
+
 }
