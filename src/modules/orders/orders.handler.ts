@@ -211,46 +211,48 @@ export class OrdersHandler{
 
   private async sendOrderTracking(recipient: string, order: any) {
 
-    const currentStatus = order.status;
-
     const steps = [
       {
         key: "pending",
-        title: "Preparing Your Flowers 🌸",
+        title: "Preparing Your Flowers",
         description: "Our florist is carefully arranging your bouquet."
       },
       {
         key: "pending_delivery",
-        title: "Out for Delivery 🚚",
+        title: "Out for Delivery",
         description: "Rider: John Doe\nPhone: +254 712 345 678"
       },
       {
         key: "delivered",
-        title: "Delivered ✅",
+        title: "Delivered",
         description: "Your flowers have been successfully delivered. Enjoy! 💜"
       }
     ];
 
-    // determine active index
-    const currentIndex = steps.findIndex(s => s.key === currentStatus);
+    const currentIndex = steps.findIndex(s => s.key === order.status);
 
-    const progressText = steps
-      .map((step, index) => {
+    const progressText = steps.map((step, index) => {
 
-        // completed
-        if (index < currentIndex) {
-          return `✅ *${step.title}*`;
-        }
+      const isLast = index === steps.length - 1;
 
-        // current step (show details)
-        if (index === currentIndex) {
-          return `🟣 *${step.title}*\n_${step.description}_`;
-        }
+      // completed
+      if (index < currentIndex) {
+        return `🟢 *${step.title}*\n${isLast ? "" : "│"}`;
+      }
 
-        // upcoming
-        return `⚪ ${step.title}`;
-      })
-      .join("\n\n");
+      // current
+      if (index === currentIndex) {
+        return (
+          `🟣 *${step.title}*\n` +
+          `   _${step.description}_\n` +
+          `${isLast ? "" : "│"}`
+        );
+      }
+
+      // pending
+      return `⚪ ${step.title}\n${isLast ? "" : "│"}`;
+
+    }).join("\n");
 
     const payload = {
       messaging_product: "whatsapp",
@@ -264,12 +266,14 @@ export class OrdersHandler{
         },
         body: {
           text:
-            `Hi there! 💜 Track your order below:\n\n` +
+            `Hi there! 💜\n\n` +
+            `Here’s your delivery progress:\n\n` +
             `${progressText}\n\n` +
+            `━━━━━━━━━━━━━━━\n` +
             `*Total:* KES ${Number(order.total).toLocaleString()}`
         },
         footer: {
-          text: "Purple Hearts 🌸 • Fresh flowers, delivered with love"
+          text: "Purple Hearts 🌸"
         },
         action: {
           buttons: [
