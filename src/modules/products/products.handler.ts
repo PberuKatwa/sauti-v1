@@ -5,7 +5,7 @@ import { APP_LOGGER } from "../../logger/logger.provider";
 import type { AppLogger } from "../../logger/winston.logger";
 import { OrderItem } from "../../types/orders.types";
 
-interface CatalogItem extends OrderItem {
+export interface CatalogItem extends OrderItem {
   imageUrl: string;
   description: string;
   productId: number;
@@ -93,8 +93,6 @@ export const catalog: CatalogItem[] = [
     description: "A fresh assortment of seasonal flowers curated daily."
   }
 ];
-
-
 
 export class ProductsHandler{
 
