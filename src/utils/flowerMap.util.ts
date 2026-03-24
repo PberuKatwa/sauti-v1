@@ -1,4 +1,5 @@
 import { CatalogItem } from "../modules/products/products.handler";
+import nlp from "compromise";
 
 type FlowerMap = Record<string, number[]>;
 
@@ -13,25 +14,36 @@ const FLOWER_KEYWORDS = [
 ];
 
 
+function toSingular(word: string): string {
+  return nlp(word).nouns().toSingular().out("text") || word;
+}
 
 export function buildFlowerMap(catalog: CatalogItem[]): FlowerMap {
   const map: FlowerMap = {};
 
   for (const item of catalog) {
-    const name = item.name.toLowerCase();
+    const tokens = item.name
+      .toLowerCase()
+      .split(/\s+/)
+      .map(w => w.replace(/[^a-z]/g, ""))
+      .map(w => toSingular(w)); // ✅ key change
 
-    for (const flower of FLOWER_KEYWORDS) {
-      if (name.includes(flower)) {
-        if (!map[flower]) {
-          map[flower] = [];
+    console.log("tokensss", tokens)
+    console.log("tokensss", tokens)
+    console.log("tokensss", tokens)
+
+    for (const token of tokens) {
+      if (FLOWER_KEYWORDS.includes(token)) {
+        if (!map[token]) {
+          map[token] = [];
         }
 
-        map[flower].push(item.productId);
+        map[token].push(item.productId);
       }
     }
 
-    // Handle special case: "baby's breath"
-    if (name.includes("baby") && name.includes("breath")) {
+    // special case
+    if (tokens.includes("baby") && tokens.includes("breath")) {
       if (!map["baby's breath"]) {
         map["baby's breath"] = [];
       }
@@ -45,6 +57,7 @@ export function buildFlowerMap(catalog: CatalogItem[]): FlowerMap {
 
 export const getMap = (catalog:CatalogItem[]):FlowerMap => {
   const map = buildFlowerMap(catalog);
+  console.log("mapppp", map)
   return map;
 }
 
@@ -54,18 +67,20 @@ export function getProductIdsFromMessage(
   catalog: CatalogItem[]
 ): number[] {
 
-  const normalizedMsg = message.toLowerCase();
+  const tokens = message
+    .toLowerCase()
+    .split(/\s+/)
+    .map(w => w.replace(/[^a-z]/g, ""))
+    .map(w => toSingular(w)); // ✅ same fix
+
   const matchedIds = new Set<number>();
 
-  for (const flower in flowerMap) {
-    const regex = new RegExp(`\\b${flower}s?\\b`, "i");
-
-    if (regex.test(normalizedMsg)) {
-      flowerMap[flower].forEach(id => matchedIds.add(id));
+  for (const token of tokens) {
+    if (flowerMap[token]) {
+      flowerMap[token].forEach(id => matchedIds.add(id));
     }
   }
 
-  // ✅ fallback
   if (matchedIds.size === 0) {
     return catalog.slice(0, 3).map(item => item.productId);
   }
