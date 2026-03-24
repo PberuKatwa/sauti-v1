@@ -126,6 +126,11 @@ export class ProductsHandler{
     const flowerMap = getMap(catalog)
     const productIds = getProductIdsFromMessage(userMessage, flowerMap, catalog);
 
+    if (productIds.length === 0) {
+      const itemsList = catalog.slice(0, 3);
+      return await this.sendFlowerCatalog(recipient, itemsList);
+    }
+
     this.logger.info("Matched product IDs:", productIds);
 
     const products = catalog.filter(item =>
