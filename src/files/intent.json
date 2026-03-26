@@ -7,6 +7,7 @@
     "entity": "Products",
     "category": "General",
     "organisation_tokens": [
+      "Uko na maua gani",
       "Can I order some Daisies",
       "Can I order an orchid",
       "Can I order a lilies",
@@ -139,6 +140,7 @@
     "entity": "Orders",
     "category": "General",
     "organisation_tokens": [
+      "Can I see my orders",
       "Can I see all my invoices",
       "Show me all the flower orders I have made",
       "List all my bouquet deliveries",
@@ -532,6 +534,7 @@
     "entity": "CustomerCare",
     "category": "General",
     "organisation_tokens": [
+      "Hello",
       "Hello there purple hearts",
       "Hey, I am looking for some beautiful flowers today",
       "Good morning, I need to send someone a bouquet"

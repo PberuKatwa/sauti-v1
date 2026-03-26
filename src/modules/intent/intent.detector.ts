@@ -69,7 +69,7 @@ export class IntentDetectorService {
         const phraseTokenized = this.tokenize(phrase).stemmedTokens;
         if (phraseTokenized.length === 0 || matchedTokens.includes(phrase)) continue;
 
-        console.log(`PHRASEEEEEE`, phraseTokenized)
+        // console.log(`PHRASEEEEEE`, phraseTokenized)
         const potentialIndices: number[] = [];
         let allWordsPresent = true;
 
@@ -147,9 +147,6 @@ export class IntentDetectorService {
     const { stemmedTokens, originalTokens } = this.tokenize(message);
 
     console.log("stemmedTokens", stemmedTokens);
-    console.log("stemmedTokens", stemmedTokens);
-    console.log("stemmedTokens", stemmedTokens);
-
 
     let bestIntent: BestIntent = this.getInitialBestIntent();
 
@@ -161,8 +158,6 @@ export class IntentDetectorService {
       let matchedOrganisationTokens: string[] = [];
       let matchedPhraseTokens: string[] = [];
 
-      console.log(`CURRENT INTENTTTTTT`, intent.name)
-      console.log(`CURRENT INTENTTTTTT`, intent.name)
       console.log(`CURRENT INTENTTTTTT`, intent.name)
 
       // Organisation Token Matching

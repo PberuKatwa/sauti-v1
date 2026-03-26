@@ -48,8 +48,8 @@ export class PaymentsHandler{
       currentOrder = await this.ordersModel.fetchLatestOrderByClient(client.id)
     }
 
-    // await this.whatsappService.sendText(`CREATE_PAYMENT .......`, recipient)
-    return await this.sendPaymentRequest(currentOrder, recipient);
+    console.log("current orderrrr", currentOrder)
+    return await this.sendPaymentRequest(recipient, currentOrder);
   }
 
 
@@ -63,6 +63,7 @@ export class PaymentsHandler{
 
   private async sendPaymentRequest(recipient: string, order: any) {
 
+    console.log("orderrrrr hereee", )
     const itemSummary = order.items
       .map((item: any) => `• ${item.name} (x${item.quantity})`)
       .join('\n');
@@ -114,7 +115,7 @@ export class PaymentsHandler{
             {
               type: "reply",
               reply: {
-                id: `view_orders`,
+                id: `Can I see all my invoices`,
                 title: "View My Orders 📦"
               }
             }
